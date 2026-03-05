@@ -2,9 +2,11 @@ import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
 import checker from 'vite-plugin-checker';
+import preact from '@preact/preset-vite';
 
 export default defineConfig({
   plugins: [
+    preact(),
     checker({
       typescript: true
     }),

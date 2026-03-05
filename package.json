@@ -18,9 +18,11 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
+    "@preact/preset-vite": "^2.10.3",
     "@types/howler": "^2.2.12",
     "eslint": "^10.0.2",
     "globals": "^17.4.0",
+    "preact": "^10.28.4",
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",

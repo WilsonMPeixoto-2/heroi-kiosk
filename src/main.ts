@@ -1,5 +1,6 @@
 import './style.css';
 import './styles/kiosk.css';
+import { h, render as renderPreact } from 'preact';
 import { SpectatorBus } from './core/bus';
 import { StateMachine } from './core/state';
 import {
@@ -41,6 +42,8 @@ import { NarrationDirector } from './narration/narrationDirector';
 import { narrationModeLabel } from './narration/settings';
 import { get, getContentDataset, getVariant, type RngFn } from './content/copy';
 import type { VariantSelection } from './content/schema';
+import { App } from './ui-preact/App';
+import { gameStore } from './core/store/gameStore';
 
 const THEMES = new Set(['neon', 'clean', 'comic']);
 
@@ -52,43 +55,7 @@ if (!appRoot) {
 applyThemeFromQuery();
 applyKioskModeClasses();
 const content = getContentDataset();
-
-appRoot.innerHTML = `
-  <div class="app-shell atmosphere">
-    <header class="topbar panel">
-      <div class="brand">
-        <h1>HERÓI DO FUTURO</h1>
-        <p>Experiência arcade para restaurar o Módulo dos Sonhos.</p>
-      </div>
-      <div class="hud">
-        <div class="timer badge" id="timerBadge" aria-live="polite">
-          <small>TEMPO</small>
-          <span id="timerValue">02:30</span>
-        </div>
-        <div class="energy badge">
-          <small>ENERGIA <strong id="energyValue">100%</strong></small>
-          <div class="track"><i id="energyFill"></i></div>
-        </div>
-        <div class="hud-buttons">
-          <button type="button" class="mini-btn" id="audioToggle">Som: ON</button>
-          <button type="button" class="mini-btn" id="narrationMode">Narração: Legendas</button>
-          <button type="button" class="mini-btn" id="narrationMute">Narração: ON</button>
-          <button type="button" class="mini-btn" id="spectatorRetry">Abrir Tela do Público</button>
-        </div>
-      </div>
-    </header>
-
-    <div class="main-grid">
-      <aside class="panel bag" id="bagPanel"></aside>
-
-      <section class="panel stage">
-        <nav class="steps" id="steps"></nav>
-        <div id="vfxHost" class="vfx-host"></div>
-        <div id="screenRoot"></div>
-      </section>
-    </div>
-  </div>
-`;
+renderPreact(h(App, {}), appRoot);
 
 const refs = {
   timerBadge: mustGetById<HTMLDivElement>('timerBadge'),
@@ -106,6 +73,11 @@ const refs = {
 };
 
 const model: GameModel = createInitialModel();
+gameStore.patch({
+  screenId: model.screen,
+  themeId: document.body.dataset.theme ?? 'neon',
+  publicState: null
+});
 const machine = new StateMachine<ScreenId>('ATTRACT');
 const spectatorBus = new SpectatorBus();
 const input = new InputManager();
@@ -291,6 +263,7 @@ window.addEventListener('blur', () => {
 
 machine.onChange((next) => {
   model.screen = next;
+  gameStore.setScreen(next);
   ops.onScreenEnter(next);
   onScreenEntered(next);
   renderCurrentScreenWithNativeTransition(next);
@@ -299,6 +272,10 @@ machine.onChange((next) => {
 ops.onScreenEnter(machine.current);
 onScreenEntered(machine.current);
 renderCurrentScreen();
+gameStore.patch({
+  screenId: machine.current,
+  publicState: getPublicState()
+});
 
 requestAnimationFrame(loop);
 const updateServiceWorker = registerSW({
@@ -1296,6 +1273,9 @@ function clearScreenTimeout(): void {
 function syncSpectator(): void {
   const publicState = getPublicState();
   spectatorBus.sync(publicState);
+  gameStore.patch({
+    publicState
+  });
 
   if (machine.current !== 'REPAIR') {
     lastSpectatorProgressBucket = -1;
