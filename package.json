@@ -33,5 +33,8 @@
     "howler": "^2.2.4",
     "lottie-web": "^5.13.0",
     "pixi.js": "^8.16.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.4"
   }
 }
