@@ -50,6 +50,14 @@ export class PixiFxLayer {
     const x = this.host.clientWidth * xRatio;
     const y = this.host.clientHeight * yRatio;
 
+    if (this.particles.length > 420) {
+      const overflow = this.particles.length - 320;
+      for (let i = 0; i < overflow; i += 1) {
+        const old = this.particles.shift();
+        old?.shape.destroy();
+      }
+    }
+
     for (let i = 0; i < 34; i += 1) {
       const shape = new Graphics();
       const size = Math.random() * 4 + 1.2;
@@ -79,6 +87,7 @@ export class PixiFxLayer {
         ]);
       }
       shape.fill(color);
+      shape.blendMode = 'add';
       shape.x = x;
       shape.y = y;
       shape.alpha = 0.86;

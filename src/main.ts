@@ -301,7 +301,21 @@ onScreenEntered(machine.current);
 renderCurrentScreen();
 
 requestAnimationFrame(loop);
-registerSW({ immediate: true });
+const updateServiceWorker = registerSW({
+  immediate: true,
+  onOfflineReady() {
+    toasts.show('Modo offline pronto para uso.', 'info', 2000);
+  },
+  onNeedRefresh() {
+    toasts.show('Atualização detectada. Reiniciando experiência...', 'info', 2400);
+    window.setTimeout(() => {
+      void updateServiceWorker(true);
+    }, 1100);
+  },
+  onRegisterError() {
+    toasts.show('Falha ao registrar cache offline.', 'warn', 2800);
+  }
+});
 
 window.addEventListener('beforeunload', () => {
   if (model.sessionStarted) {

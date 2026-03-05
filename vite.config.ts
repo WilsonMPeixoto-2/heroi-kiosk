@@ -10,7 +10,13 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['assets/backgrounds/*.svg', 'assets/fx/*.png', 'assets/icons/*.svg'],
+      includeAssets: [
+        'assets/backgrounds/*.svg',
+        'assets/fx/*.png',
+        'assets/icons/*.svg',
+        'assets/icons/tools/*.svg',
+        'assets/audio/*.{wav,mp3,webm}'
+      ],
       manifest: {
         name: 'Herói do Futuro - Kiosk',
         short_name: 'HeroiKiosk',
@@ -34,7 +40,21 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,avif}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,avif,wav,mp3,webm}'],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'audio',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'heroi-kiosk-audio-v1',
+              expiration: {
+                maxEntries: 16,
+                maxAgeSeconds: 30 * 24 * 60 * 60
+              }
+            }
+          }
+        ],
         navigateFallbackDenylist: [/^\/spectator\.html/]
       }
     })
