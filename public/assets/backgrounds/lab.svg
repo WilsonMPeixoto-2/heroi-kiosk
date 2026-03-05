@@ -1,19 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a2239"/>
-      <stop offset="100%" stop-color="#174f79"/>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071a2d"/>
+      <stop offset="56%" stop-color="#0a3558"/>
+      <stop offset="100%" stop-color="#114f74"/>
     </linearGradient>
+    <radialGradient id="haloA" cx="24%" cy="26%" r="34%">
+      <stop offset="0%" stop-color="#66f7ff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#66f7ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="haloB" cx="74%" cy="28%" r="40%">
+      <stop offset="0%" stop-color="#7fd2ff" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#7fd2ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="scan">
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="1" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.08"/>
+      </feComponentTransfer>
+    </filter>
   </defs>
-  <rect width="1920" height="1080" fill="url(#g2)"/>
-  <g fill="#6bd8ff" opacity="0.2">
-    <circle cx="260" cy="260" r="110"/>
-    <circle cx="980" cy="210" r="145"/>
-    <circle cx="1520" cy="300" r="120"/>
+  <rect width="1920" height="1080" fill="url(#base)"/>
+  <rect width="1920" height="1080" fill="url(#haloA)"/>
+  <rect width="1920" height="1080" fill="url(#haloB)"/>
+
+  <g stroke="#9fe6ff" stroke-width="2.2" stroke-opacity="0.33" fill="none">
+    <path d="M100 860h1720"/>
+    <path d="M140 805h1640"/>
+    <path d="M220 750h1480"/>
+    <path d="M280 695h1360"/>
   </g>
-  <g stroke="#8feaff" stroke-width="3" opacity="0.28">
-    <path d="M120 820H1800"/>
-    <path d="M160 760H1760"/>
-    <path d="M220 700H1700"/>
+
+  <g stroke="#7de7ff" stroke-opacity="0.35" stroke-width="3.4" fill="none">
+    <path d="M215 680v180"/>
+    <path d="M530 620v240"/>
+    <path d="M870 572v288"/>
+    <path d="M1230 620v240"/>
+    <path d="M1600 668v192"/>
   </g>
+
+  <g opacity="0.28" fill="#4ec8ef">
+    <rect x="184" y="640" width="62" height="22" rx="5"/>
+    <rect x="498" y="596" width="66" height="22" rx="5"/>
+    <rect x="838" y="546" width="66" height="22" rx="5"/>
+    <rect x="1198" y="596" width="66" height="22" rx="5"/>
+    <rect x="1568" y="640" width="66" height="22" rx="5"/>
+  </g>
+
+  <g fill="#0e2f4f" opacity="0.84">
+    <rect x="142" y="820" width="250" height="160" rx="18"/>
+    <rect x="472" y="770" width="350" height="210" rx="18"/>
+    <rect x="872" y="730" width="330" height="250" rx="18"/>
+    <rect x="1250" y="770" width="320" height="210" rx="18"/>
+    <rect x="1620" y="820" width="180" height="160" rx="18"/>
+  </g>
+
+  <rect width="1920" height="1080" filter="url(#scan)" opacity="0.28"/>
 </svg>

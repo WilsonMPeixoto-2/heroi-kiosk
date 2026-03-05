@@ -637,7 +637,7 @@ function renderToolkitScreen(): string {
         data-action="toggle-tool"
         data-tool="${tool.id}"
         data-focusable="true">
-        <span class="icon">${tool.icon}</span>
+        ${renderToolIcon(tool.id, tool.icon)}
         <strong>${tool.label}</strong>
         <p>${content.screens.toolkit.tooltips[tool.id] ?? tool.summary}</p>
       </button>
@@ -672,7 +672,7 @@ function renderRepairScreen(): string {
       const armed = model.repair.armedTool === tool.id ? 'is-armed' : '';
       return `
         <button class="tool-chip ${armed}" data-action="arm-tool" data-tool="${tool.id}" data-focusable="true">
-          ${tool.icon} ${tool.label}
+          ${renderToolIcon(tool.id, tool.icon)} ${tool.label}
         </button>
       `;
     })
@@ -1252,6 +1252,15 @@ function renderAvatarSvg(): string {
       <rect x="50" y="110" width="80" height="86" rx="18" fill="${outfit}" stroke="rgba(0,0,0,.35)" stroke-width="3"/>
       <text x="90" y="208" text-anchor="middle" fill="rgba(234,246,255,.8)" font-size="10">${ACCESSORIES[model.avatar.accessory]}</text>
     </svg>
+  `;
+}
+
+function renderToolIcon(toolId: string, fallback: string): string {
+  return `
+    <span class="icon">
+      <img class="tool-icon" src="/assets/icons/tools/${toolId}.svg" alt="" loading="lazy" decoding="async"/>
+      <span class="tool-fallback" aria-hidden="true">${fallback}</span>
+    </span>
   `;
 }
 

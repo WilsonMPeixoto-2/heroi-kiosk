@@ -793,6 +793,106 @@ body.admin-enabled .admin-only {
   border-color: var(--danger);
 }
 
+.stage {
+  border-image: linear-gradient(120deg, color-mix(in srgb, var(--primary) 58%, transparent), color-mix(in srgb, var(--secondary) 36%, transparent)) 1;
+}
+
+.screen {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 40px rgba(0, 0, 0, 0.38);
+}
+
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(65% 55% at 20% 14%, rgba(255, 255, 255, 0.12), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.22));
+}
+
+.screen-bg {
+  animation: bg-pan 24s ease-in-out infinite alternate;
+}
+
+@keyframes bg-pan {
+  0% {
+    transform: scale(1.01) translate3d(0, 0, 0);
+    filter: saturate(1.08) contrast(1.03);
+  }
+  100% {
+    transform: scale(1.06) translate3d(-1.2%, -0.8%, 0);
+    filter: saturate(1.15) contrast(1.08);
+  }
+}
+
+.content {
+  background:
+    linear-gradient(180deg, rgba(5, 15, 30, 0.14), rgba(5, 15, 30, 0.72)),
+    radial-gradient(80% 50% at 50% -10%, rgba(126, 232, 255, 0.11), transparent 62%);
+}
+
+.btn {
+  transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.btn.primary {
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.btn.primary:active,
+.btn.ghost:active {
+  transform: translateY(0);
+}
+
+.tool-card {
+  border-width: 1.2px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.tool-card .icon,
+.tool-chip .icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.tool-card .icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(5, 20, 34, 0.62);
+  margin-bottom: 6px;
+}
+
+.tool-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-chip .icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(4, 18, 30, 0.62);
+}
+
+.tool-icon {
+  width: 78%;
+  height: 78%;
+  display: block;
+}
+
+.tool-fallback {
+  display: none;
+}
+
 .captions-overlay {
   position: absolute;
   left: 50%;

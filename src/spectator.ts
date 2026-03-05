@@ -1,6 +1,6 @@
 import './spectator.css';
 import { SpectatorBus } from './core/bus';
-import { ACCESSORIES, EYE_COLORS, HAIR_COLORS, OUTFIT_COLORS, SKIN_COLORS, type SpectatorPublicState } from './core/types';
+import { ACCESSORIES, EYE_COLORS, HAIR_COLORS, OUTFIT_COLORS, SKIN_COLORS, TOOLS, type SpectatorPublicState } from './core/types';
 import { getContentDataset } from './content/copy';
 import { createSpectatorCaptionsOverlay } from './ui/spectatorCaptions';
 
@@ -116,7 +116,9 @@ function renderAvatar(state: SpectatorPublicState): string {
   const hair = HAIR_COLORS[state.avatar.hair] ?? HAIR_COLORS[0];
   const eyes = EYE_COLORS[state.avatar.eyes] ?? EYE_COLORS[0];
   const outfit = OUTFIT_COLORS[state.avatar.outfit] ?? OUTFIT_COLORS[0];
-  const tools = state.toolkit.length > 0 ? state.toolkit.join(', ') : 'Ferramentas pendentes';
+  const tools = state.toolkit.length > 0
+    ? state.toolkit.map((id) => TOOLS.find((tool) => tool.id === id)?.label ?? id).join(', ')
+    : 'Ferramentas pendentes';
 
   return `
     <svg viewBox="0 0 280 280" class="avatar-big" role="img" aria-label="Avatar do jogador">

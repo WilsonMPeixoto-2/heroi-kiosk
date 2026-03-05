@@ -72,6 +72,7 @@ main {
   background: rgba(9, 25, 44, 0.72);
   backdrop-filter: blur(8px);
   padding: 14px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 30px rgba(0, 0, 0, 0.28);
 }
 
 .avatar-panel {
@@ -139,6 +140,7 @@ main {
 
 .slot.is-done {
   border-color: #45cf78;
+  box-shadow: 0 0 0 1px rgba(69, 207, 120, 0.45), 0 0 18px rgba(69, 207, 120, 0.25);
 }
 
 .slot small {
