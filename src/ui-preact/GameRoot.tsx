@@ -1,6 +1,7 @@
 import { Hud } from './Hud';
 import { ScreenHost } from './ScreenHost';
 import { LottieOverlay } from './components/LottieOverlay';
+import { BagPanel } from './BagPanel';
 
 interface GameRootProps {
   screenId: string;
@@ -18,7 +19,7 @@ export function GameRoot({ screenId }: GameRootProps) {
       </header>
 
       <div class="main-grid" data-screen-id={screenId}>
-        <aside class="panel bag" id="bagPanel" />
+        <BagPanel />
         <LottieOverlay />
         <ScreenHost />
       </div>
