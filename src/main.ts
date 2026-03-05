@@ -28,6 +28,7 @@ import { bindFocusNavigation, type FocusNavigator } from './core/kiosk/focus';
 import { installVisibilityResilience } from './core/kiosk/visibility';
 import { registerSW } from 'virtual:pwa-register';
 import { gsap } from 'gsap';
+import morphdom from 'morphdom';
 import { Soundscape } from './core/audio/soundscape';
 import { IDLE_RESET_MS, KIOSK_RUNTIME_FLAGS, SCREEN_ORDER, SCREEN_TIMEOUTS_MS, TEST_MODE } from './core/constants';
 import { OpsRecorder } from './ops/recorder';
@@ -245,6 +246,7 @@ refs.spectatorRetry.addEventListener('click', () => {
   }
   idle.touch();
 });
+refs.screenRoot.addEventListener('click', onScreenRootClick);
 
 window.addEventListener('pointerdown', () => {
   idle.touch();
@@ -528,9 +530,8 @@ function onScreenEntered(screen: ScreenId): void {
 }
 
 function renderCurrentScreen(): void {
-  refs.screenRoot.innerHTML = renderScreenHtml();
-  refs.steps.innerHTML = renderStepsHtml();
-  bindScreenActions();
+  patchDom(refs.screenRoot, renderScreenHtml());
+  patchDom(refs.steps, renderStepsHtml());
   focusNavigator.refresh();
   focusNavigator.focusPrimaryAction();
   animateScreenTransition(machine.current);
@@ -802,13 +803,17 @@ function renderResultScreen(): string {
   `;
 }
 
-function bindScreenActions(): void {
-  refs.screenRoot.querySelectorAll<HTMLElement>('[data-action]').forEach((node) => {
-    node.addEventListener('click', () => {
-      idle.touch();
-      handleClickAction(node.dataset.action ?? '', node);
-    });
-  });
+function onScreenRootClick(event: MouseEvent): void {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+  const node = target.closest<HTMLElement>('[data-action]');
+  if (!node || !refs.screenRoot.contains(node)) {
+    return;
+  }
+  idle.touch();
+  handleClickAction(node.dataset.action ?? '', node);
 }
 
 function handleClickAction(action: string, node: HTMLElement): void {
@@ -1467,6 +1472,69 @@ function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): s
   }
 
   return 'Persistência em Missão';
+}
+
+function patchDom(container: HTMLElement, innerHtml: string): void {
+  const focusDescriptor = captureFocusDescriptor(container);
+  const target = document.createElement(container.tagName.toLowerCase());
+  target.innerHTML = innerHtml;
+
+  morphdom(container, target, {
+    childrenOnly: true,
+    onBeforeElUpdated: (fromEl, toEl) => {
+      if (fromEl instanceof HTMLInputElement && toEl instanceof HTMLInputElement && fromEl === document.activeElement) {
+        toEl.value = fromEl.value;
+      }
+      if (fromEl.getAttribute('data-preserve') === '1') {
+        return false;
+      }
+      return true;
+    }
+  });
+
+  restoreFocusDescriptor(container, focusDescriptor);
+}
+
+function captureFocusDescriptor(container: HTMLElement): string | null {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !container.contains(active)) {
+    return null;
+  }
+
+  if (active.id) {
+    return `#${active.id}`;
+  }
+
+  if (active.dataset.action) {
+    const attrs = ['action', 'kind', 'value', 'tool', 'slot', 'role'] as const;
+    const parts = attrs
+      .map((key) => {
+        const dataKey = key as keyof DOMStringMap;
+        const value = active.dataset[dataKey];
+        return value ? `[data-${key}="${cssEscape(value)}"]` : '';
+      })
+      .join('');
+    return parts || null;
+  }
+
+  return active.getAttribute('data-focusable') === 'true' ? '[data-focusable="true"]' : null;
+}
+
+function restoreFocusDescriptor(container: HTMLElement, descriptor: string | null): void {
+  if (!descriptor) {
+    return;
+  }
+  const candidate = container.querySelector<HTMLElement>(descriptor);
+  if (candidate) {
+    candidate.focus({ preventScroll: true });
+  }
+}
+
+function cssEscape(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+  return value.replace(/["\\]/g, '\\$&');
 }
 
 type FxLayer = {
