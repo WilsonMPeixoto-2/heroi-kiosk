@@ -8,11 +8,7 @@ import {
   createInitialModel,
   createInitialSlotProgress,
   DREAM_SLOTS,
-  EYE_COLORS,
-  HAIR_COLORS,
   MISSION_TOTAL_MS,
-  OUTFIT_COLORS,
-  SKIN_COLORS,
   TOOLS,
   type GameModel,
   type ScreenId,
@@ -29,9 +25,8 @@ import { bindFocusNavigation, type FocusNavigator } from './core/kiosk/focus';
 import { installVisibilityResilience } from './core/kiosk/visibility';
 import { registerSW } from 'virtual:pwa-register';
 import { gsap } from 'gsap';
-import morphdom from 'morphdom';
 import { Soundscape } from './core/audio/soundscape';
-import { IDLE_RESET_MS, KIOSK_RUNTIME_FLAGS, SCREEN_ORDER, SCREEN_TIMEOUTS_MS, TEST_MODE } from './core/constants';
+import { IDLE_RESET_MS, KIOSK_RUNTIME_FLAGS, SCREEN_TIMEOUTS_MS, TEST_MODE } from './core/constants';
 import { OpsRecorder } from './ops/recorder';
 import { OpsDebugPanel } from './ops/debugPanel';
 import { createTimestampedFileName, downloadTextFile, exportEventsCsv, exportSessionJson, exportSessionsSummaryCsv } from './ops/export';
@@ -63,7 +58,6 @@ const refs = {
   energyValue: mustGetById<HTMLElement>('energyValue'),
   energyFill: mustGetById<HTMLElement>('energyFill'),
   bagPanel: mustGetById<HTMLDivElement>('bagPanel'),
-  steps: mustGetById<HTMLDivElement>('steps'),
   vfxHost: mustGetById<HTMLDivElement>('vfxHost'),
   screenRoot: mustGetById<HTMLDivElement>('screenRoot'),
   audioToggle: mustGetById<HTMLButtonElement>('audioToggle'),
@@ -521,11 +515,17 @@ function onScreenEntered(screen: ScreenId): void {
 }
 
 function renderCurrentScreen(): void {
-  patchDom(refs.screenRoot, renderScreenHtml());
-  patchDom(refs.steps, renderStepsHtml());
-  focusNavigator.refresh();
-  focusNavigator.focusPrimaryAction();
-  animateScreenTransition(machine.current);
+  gameStore.patch({
+    uiView: {
+      model: cloneGameModel(model),
+      uiCopy: { ...uiCopy }
+    }
+  });
+  window.requestAnimationFrame(() => {
+    focusNavigator.refresh();
+    focusNavigator.focusPrimaryAction();
+    animateScreenTransition(machine.current);
+  });
   updateHud();
   syncSpectator();
 }
@@ -550,248 +550,6 @@ function renderCurrentScreenWithNativeTransition(screen: ScreenId): void {
     // Falha de transição nativa não pode interromper o fluxo do kiosk.
     animateScreenTransition(screen);
   });
-}
-
-function renderScreenHtml(): string {
-  switch (machine.current) {
-    case 'ATTRACT':
-      return `
-        <section class="screen screen-attract" data-testid="screen-attract">
-          <div class="screen-bg bg-distopia"></div>
-          <div class="content">
-            <p class="pill">${content.screens.attract.pill}</p>
-            <h2>${uiCopy.attractTitle}</h2>
-            <p>${uiCopy.attractSubtitle}</p>
-            <div class="button-row">
-              <button class="btn primary" data-action="start-session" data-primary="1" data-focusable="true" data-testid="start-session">${uiCopy.attractCtaStart}</button>
-              <button class="btn ghost" data-action="open-spectator" data-focusable="true">${content.screens.attract.ctaSpectator}</button>
-            </div>
-          </div>
-        </section>
-      `;
-    case 'INTRO':
-      return `
-        <section class="screen screen-intro" data-testid="screen-intro">
-          <div class="screen-bg bg-distopia"></div>
-          <div class="content">
-            <h2>${uiCopy.introTitle}</h2>
-            <p>${uiCopy.introLine1}</p>
-            <p>${uiCopy.introLine2}</p>
-            <div class="button-row">
-              <button class="btn primary" data-action="skip-intro" data-primary="1" data-focusable="true" data-testid="skip-intro">${content.screens.intro.continueCta}</button>
-            </div>
-          </div>
-        </section>
-      `;
-    case 'AVATAR':
-      return renderAvatarScreen();
-    case 'TOOLKIT':
-      return renderToolkitScreen();
-    case 'REPAIR':
-      return renderRepairScreen();
-    case 'RESULT':
-      return renderResultScreen();
-    default:
-      return '';
-  }
-}
-
-function renderAvatarScreen(): string {
-  const avatar = model.avatar;
-
-  const swatches = (
-    label: string,
-    kind: 'skin' | 'hair' | 'eyes' | 'outfit',
-    colors: string[],
-    selectedIndex: number
-  ): string => {
-    const buttons = colors
-      .map((color, index) => {
-        const selected = selectedIndex === index ? 'is-selected' : '';
-        return `
-          <button
-            type="button"
-            class="swatch ${selected}"
-            style="background:${color}"
-            data-action="avatar-set"
-            data-kind="${kind}"
-            data-value="${index}"
-            data-focusable="true"
-            aria-label="${label} ${index + 1}">
-          </button>
-        `;
-      })
-      .join('');
-
-    return `<div class="group"><small>${label}</small><div class="swatches">${buttons}</div></div>`;
-  };
-
-  const accessoryOptions = ACCESSORIES.map((accessory, index) => {
-    const selected = avatar.accessory === index ? 'is-selected' : '';
-    return `
-      <button
-        type="button"
-        class="pill-option ${selected}"
-        data-action="avatar-accessory"
-        data-value="${index}"
-        data-focusable="true">
-        ${accessory}
-      </button>
-    `;
-  }).join('');
-
-  return `
-    <section class="screen screen-avatar" data-testid="screen-avatar">
-      <div class="screen-bg bg-lab"></div>
-      <div class="content">
-        <h2>${content.screens.avatar.title}</h2>
-        <p>${content.screens.avatar.subtitle}</p>
-        <div class="avatar-layout">
-          <div class="avatar-preview">
-            ${renderAvatarSvg()}
-          </div>
-          <div class="avatar-controls">
-            ${swatches('Tom de pele', 'skin', SKIN_COLORS, avatar.skin)}
-            ${swatches('Cabelo', 'hair', HAIR_COLORS, avatar.hair)}
-            ${swatches('Olhos', 'eyes', EYE_COLORS, avatar.eyes)}
-            ${swatches('Traje', 'outfit', OUTFIT_COLORS, avatar.outfit)}
-            <div class="group"><small>Acessório</small><div class="pill-options">${accessoryOptions}</div></div>
-          </div>
-        </div>
-        <div class="button-row">
-          <button class="btn ghost" data-action="back-intro" data-role="back" data-focusable="true">${content.screens.avatar.backCta}</button>
-          <button class="btn primary" data-action="go-toolkit" data-primary="1" data-focusable="true">${content.screens.avatar.confirmCta}</button>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function renderToolkitScreen(): string {
-  const selectedSet = new Set(model.toolkit);
-  const cards = TOOLS.map((tool) => {
-    const selected = selectedSet.has(tool.id) ? 'is-selected' : '';
-    return `
-      <button
-        type="button"
-        class="tool-card ${selected}"
-        data-action="toggle-tool"
-        data-tool="${tool.id}"
-        data-focusable="true">
-        ${renderToolIcon(tool.id, tool.icon)}
-        <strong>${tool.label}</strong>
-        <p>${content.screens.toolkit.tooltips[tool.id] ?? tool.summary}</p>
-      </button>
-    `;
-  }).join('');
-
-  return `
-    <section class="screen screen-toolkit" data-testid="screen-toolkit">
-      <div class="screen-bg bg-lab"></div>
-      <div class="content">
-        <h2>${content.screens.toolkit.title}</h2>
-        <p>${content.screens.toolkit.subtitle}</p>
-        <div class="tool-grid">${cards}</div>
-        <p class="hint">${content.screens.toolkit.selectedHint}: <strong>${model.toolkit.length}/3</strong></p>
-        <div class="button-row">
-          <button class="btn ghost" data-action="back-avatar" data-role="back" data-focusable="true">${content.screens.toolkit.backCta}</button>
-          <button class="btn primary" data-action="go-repair" data-primary="1" data-focusable="true" ${
-            model.toolkit.length !== 3 ? 'disabled' : ''
-          }>${content.screens.toolkit.startRepairCta}</button>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function renderRepairScreen(): string {
-  const selectedTools = model.toolkit.map((toolId) => TOOLS.find((tool) => tool.id === toolId)).filter(Boolean) as typeof TOOLS;
-  const completed = getCompletedSlotsCount();
-
-  const tools = selectedTools
-    .map((tool) => {
-      const armed = model.repair.armedTool === tool.id ? 'is-armed' : '';
-      return `
-        <button class="tool-chip ${armed}" data-action="arm-tool" data-tool="${tool.id}" data-focusable="true">
-          ${renderToolIcon(tool.id, tool.icon)} ${tool.label}
-        </button>
-      `;
-    })
-    .join('');
-
-  const slots = DREAM_SLOTS.map((slot) => {
-    const progress = model.repair.slotProgress[slot.id] ?? 0;
-    const done = progress >= 2;
-    const status = done ? 'ONLINE' : `${progress}/2`;
-    const slotLabel = content.screens.repair.slotNames[slot.id] ?? slot.label;
-    return `
-      <button class="slot ${done ? 'is-done' : ''}" data-action="apply-tool" data-slot="${slot.id}" data-focusable="true">
-        <strong>${slotLabel}</strong>
-        <small>${status}</small>
-      </button>
-    `;
-  }).join('');
-
-  return `
-    <section class="screen screen-repair" data-testid="screen-repair">
-      <div class="screen-bg bg-lab"></div>
-      <div class="content">
-        <h2>${content.screens.repair.title}</h2>
-        <p>${content.screens.repair.subtitle}</p>
-        <div class="repair-tools">${tools}</div>
-        <div class="repair-grid">${slots}</div>
-        <p class="hint">${model.repair.feedback}</p>
-        <p class="hint">${content.screens.repair.progressLabel}: <strong>${completed}/4</strong></p>
-        <p class="hint">${content.screens.repair.comboLabel}: <strong>x${model.comboStreak}</strong> | Melhor combo: <strong>x${model.maxCombo}</strong></p>
-        <div class="button-row">
-          <button class="btn ghost" data-action="back-toolkit" data-role="back" data-focusable="true">${content.screens.repair.backCta}</button>
-          <button class="btn primary" data-action="finish-repair" data-primary="1" data-focusable="true" ${
-            completed < 3 ? 'disabled' : ''
-          }>${content.screens.repair.finishCta}</button>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function renderResultScreen(): string {
-  return `
-    <section class="screen screen-result" data-testid="screen-result">
-      <div class="screen-bg bg-reborn"></div>
-      <div class="content">
-        <h2>${model.resultTitle}</h2>
-        <p>${model.resultMessage}</p>
-        <div class="summary-grid">
-          <article>
-            <small>${content.screens.result.summaryLabels.toolsUsed}</small>
-            <strong>${model.toolkit
-              .map((toolId) => TOOLS.find((tool) => tool.id === toolId)?.label ?? toolId)
-              .join(', ')}</strong>
-          </article>
-          <article>
-            <small>${content.screens.result.summaryLabels.restoredSlots}</small>
-            <strong>${getCompletedSlotsCount()} / 4</strong>
-          </article>
-          <article>
-            <small>${content.screens.result.summaryLabels.energyLeft}</small>
-            <strong>${Math.max(0, Math.round((model.missionMsLeft / MISSION_TOTAL_MS) * 100))}%</strong>
-          </article>
-          <article>
-            <small>${content.screens.result.summaryLabels.maxCombo}</small>
-            <strong>x${model.maxCombo}</strong>
-          </article>
-          <article>
-            <small>${content.screens.result.summaryLabels.heroBadge}</small>
-            <strong>${model.resultBadge}</strong>
-          </article>
-        </div>
-        <div class="button-row">
-           <button class="btn ghost" data-action="play-again" data-primary="1" data-focusable="true" data-testid="play-again">${content.screens.result.playAgainCta}</button>
-          <button class="btn primary" data-action="go-memory" data-focusable="true">${content.screens.result.goMemoryCta}</button>
-        </div>
-      </div>
-    </section>
-  `;
 }
 
 function onScreenRootClick(event: MouseEvent): void {
@@ -837,12 +595,9 @@ function handleClickAction(action: string, node: HTMLElement): void {
       if (kind === 'outfit') model.avatar.outfit = value;
       if (kind === 'skin' || kind === 'hair' || kind === 'eyes' || kind === 'outfit') {
         ops.onAvatarChoice(kind, value);
-        updateAvatarSelectionInPlace(kind, value, node);
       }
       soundscape.play('click');
-      updateAvatarPreviewInPlace();
-      updateHud();
-      syncSpectator();
+      renderCurrentScreen();
       break;
     }
     case 'avatar-accessory': {
@@ -851,10 +606,7 @@ function handleClickAction(action: string, node: HTMLElement): void {
       model.avatar.accessory = value;
       ops.onAvatarChoice('accessory', value);
       soundscape.play('click');
-      updateAvatarPreviewInPlace();
-      updateAvatarSelectionInPlace('accessory', value, node);
-      updateHud();
-      syncSpectator();
+      renderCurrentScreen();
       break;
     }
     case 'back-intro':
@@ -1176,33 +928,6 @@ function updateHud(): void {
   `;
 }
 
-function renderStepsHtml(): string {
-  return SCREEN_ORDER.map((screen) => {
-    const label = stepLabel(screen);
-    const active = machine.current === screen ? 'is-active' : '';
-    return `<span class="step ${active}">${label}</span>`;
-  }).join('');
-}
-
-function stepLabel(screen: ScreenId): string {
-  switch (screen) {
-    case 'ATTRACT':
-      return '1. Attract';
-    case 'INTRO':
-      return '2. Contexto';
-    case 'AVATAR':
-      return '3. Avatar';
-    case 'TOOLKIT':
-      return '4. Ferramentas';
-    case 'REPAIR':
-      return '5. Reparo';
-    case 'RESULT':
-      return '6. Resultado';
-    default:
-      return screen;
-  }
-}
-
 function refreshUiCopyForScreen(screen: ScreenId): void {
   if (screen === 'ATTRACT') {
     uiCopy.attractTitle = pickVariantByPath('screens.attract.title', 'ATTRACT.title').text;
@@ -1305,115 +1030,6 @@ function getPublicState(): SpectatorPublicState {
       slotProgress: model.repair.slotProgress
     }
   };
-}
-
-function renderAvatarSvg(): string {
-  const skin = SKIN_COLORS[model.avatar.skin] ?? SKIN_COLORS[0];
-  const hair = HAIR_COLORS[model.avatar.hair] ?? HAIR_COLORS[0];
-  const eyes = EYE_COLORS[model.avatar.eyes] ?? EYE_COLORS[0];
-  const outfit = OUTFIT_COLORS[model.avatar.outfit] ?? OUTFIT_COLORS[0];
-  const accessoryMarkup = renderAccessorySvg(model.avatar.accessory, outfit);
-
-  return `
-    <svg viewBox="0 0 220 260" class="avatar-svg" role="img" aria-label="Avatar personalizável">
-      <defs>
-        <linearGradient id="avatarSuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${outfit}" />
-          <stop offset="100%" stop-color="#0b1f35" />
-        </linearGradient>
-      </defs>
-      <g class="avatar-bob">
-        <ellipse cx="110" cy="238" rx="54" ry="12" fill="rgba(0,0,0,.28)" />
-        <circle cx="110" cy="124" r="90" fill="rgba(45,226,230,.12)" />
-        <g class="avatar-legs">
-          <rect x="86" y="186" width="18" height="42" rx="7" fill="url(#avatarSuitGrad)" />
-          <rect x="116" y="186" width="18" height="42" rx="7" fill="url(#avatarSuitGrad)" />
-          <rect x="82" y="225" width="26" height="10" rx="5" fill="#141d2c" />
-          <rect x="112" y="225" width="26" height="10" rx="5" fill="#141d2c" />
-        </g>
-        <g class="avatar-arms">
-          <rect x="55" y="132" width="22" height="56" rx="10" fill="url(#avatarSuitGrad)" transform="rotate(8 55 132)" />
-          <rect x="143" y="132" width="22" height="56" rx="10" fill="url(#avatarSuitGrad)" transform="rotate(-8 143 132)" />
-          <circle cx="68" cy="188" r="9" fill="${skin}" />
-          <circle cx="152" cy="188" r="9" fill="${skin}" />
-        </g>
-        <g class="avatar-body">
-          <rect x="74" y="104" width="72" height="90" rx="22" fill="url(#avatarSuitGrad)" stroke="rgba(0,0,0,.34)" stroke-width="2" />
-          <path d="M87 120 L110 142 L133 120" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="3.2" stroke-linecap="round" />
-          <circle cx="110" cy="144" r="10" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.35)" />
-        </g>
-        <g class="avatar-head">
-          <rect x="72" y="42" width="76" height="76" rx="26" fill="${skin}" stroke="rgba(0,0,0,.38)" stroke-width="2.4"/>
-          <path d="M66 56 Q110 18 154 56 L154 78 L66 78 Z" fill="${hair}" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
-          <g class="avatar-eye-group">
-            <ellipse cx="91" cy="84" rx="11" ry="8.2" fill="white" />
-            <ellipse cx="129" cy="84" rx="11" ry="8.2" fill="white" />
-            <circle cx="91" cy="84" r="4.6" fill="${eyes}" />
-            <circle cx="129" cy="84" r="4.6" fill="${eyes}" />
-          </g>
-          <path d="M92 103 Q110 116 128 103" fill="none" stroke="rgba(36,24,24,.62)" stroke-width="3" stroke-linecap="round" />
-          <circle cx="82" cy="96" r="4" fill="rgba(255,130,130,.3)" />
-          <circle cx="138" cy="96" r="4" fill="rgba(255,130,130,.3)" />
-        </g>
-        ${accessoryMarkup}
-      </g>
-      <text x="110" y="254" text-anchor="middle" fill="rgba(234,246,255,.92)" font-size="11.5" font-weight="700">${ACCESSORIES[model.avatar.accessory]}</text>
-    </svg>
-  `;
-}
-
-function renderAccessorySvg(accessoryIndex: number, outfit: string): string {
-  switch (accessoryIndex) {
-    case 1:
-      return `
-        <g id="accessory" class="avatar-accessory">
-          <rect x="74" y="70" width="72" height="20" rx="8" fill="rgba(20,30,44,.92)" />
-          <rect x="82" y="74" width="56" height="12" rx="6" fill="rgba(45,226,230,.72)" />
-        </g>
-      `;
-    case 2:
-      return `
-        <g id="accessory" class="avatar-accessory">
-          <rect x="147" y="170" width="16" height="10" rx="5" fill="#1a2635" />
-          <circle cx="155" cy="176" r="7.5" fill="${outfit}" stroke="#dff7ff" stroke-width="1.6" />
-        </g>
-      `;
-    case 3:
-      return `
-        <g id="accessory" class="avatar-accessory">
-          <path d="M66 112 Q110 146 154 112 L154 168 Q110 210 66 168 Z" fill="rgba(255,90,140,.18)" stroke="rgba(255,130,180,.55)" />
-        </g>
-      `;
-    case 4:
-      return `
-        <g id="accessory" class="avatar-accessory">
-          <rect x="78" y="76" width="24" height="12" rx="6" fill="#0e1726" />
-          <rect x="118" y="76" width="24" height="12" rx="6" fill="#0e1726" />
-          <rect x="102" y="80" width="16" height="4" rx="2" fill="#0e1726" />
-          <rect x="80" y="78" width="20" height="8" rx="4" fill="rgba(80,240,255,.6)" />
-          <rect x="120" y="78" width="20" height="8" rx="4" fill="rgba(80,240,255,.6)" />
-        </g>
-      `;
-    case 5:
-      return `
-        <g id="accessory" class="avatar-accessory">
-          <circle cx="110" cy="158" r="10" fill="#ffd767" stroke="#12223a" stroke-width="2" />
-          <path d="M110 145 L113 153 L122 153 L115 158 L118 166 L110 161 L102 166 L105 158 L98 153 L107 153 Z"
-            fill="#ff8e35" />
-        </g>
-      `;
-    default:
-      return '';
-  }
-}
-
-function renderToolIcon(toolId: string, fallback: string): string {
-  return `
-    <span class="icon">
-      <img class="tool-icon" src="/assets/icons/tools/${toolId}.svg" alt="" loading="lazy" decoding="async"/>
-      <span class="tool-fallback" aria-hidden="true">${fallback}</span>
-    </span>
-  `;
 }
 
 function animateScreenTransition(screen: ScreenId): void {
@@ -1533,31 +1149,6 @@ function getFeaturedMotionTargets(content: HTMLElement, screen: ScreenId): HTMLE
   }
 }
 
-function updateAvatarPreviewInPlace(): void {
-  const preview = refs.screenRoot.querySelector<HTMLElement>('.avatar-preview');
-  if (!preview) {
-    return;
-  }
-  preview.innerHTML = renderAvatarSvg();
-}
-
-function updateAvatarSelectionInPlace(
-  kind: 'skin' | 'hair' | 'eyes' | 'outfit' | 'accessory',
-  value: number,
-  node: HTMLElement
-): void {
-  if (kind === 'accessory') {
-    refs.screenRoot.querySelectorAll<HTMLElement>('[data-action="avatar-accessory"]').forEach((button) => {
-      button.classList.toggle('is-selected', Number(button.dataset.value) === value);
-    });
-    return;
-  }
-
-  refs.screenRoot.querySelectorAll<HTMLElement>(`[data-action="avatar-set"][data-kind="${kind}"]`).forEach((button) => {
-    button.classList.toggle('is-selected', button === node);
-  });
-}
-
 function triggerHaptics(pattern: number | number[]): void {
   if (reduceMotion) {
     return;
@@ -1594,6 +1185,18 @@ function emitLottie(mode: 'result' | 'slot'): void {
   );
 }
 
+function cloneGameModel(source: GameModel): GameModel {
+  return {
+    ...source,
+    avatar: { ...source.avatar },
+    toolkit: [...source.toolkit],
+    repair: {
+      ...source.repair,
+      slotProgress: { ...source.repair.slotProgress }
+    }
+  };
+}
+
 function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): string {
   if (rare) {
     return 'Selo Aurora Suprema';
@@ -1610,69 +1213,6 @@ function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): s
   }
 
   return 'Persistência em Missão';
-}
-
-function patchDom(container: HTMLElement, innerHtml: string): void {
-  const focusDescriptor = captureFocusDescriptor(container);
-  const target = document.createElement(container.tagName.toLowerCase());
-  target.innerHTML = innerHtml;
-
-  morphdom(container, target, {
-    childrenOnly: true,
-    onBeforeElUpdated: (fromEl, toEl) => {
-      if (fromEl instanceof HTMLInputElement && toEl instanceof HTMLInputElement && fromEl === document.activeElement) {
-        toEl.value = fromEl.value;
-      }
-      if (fromEl.getAttribute('data-preserve') === '1') {
-        return false;
-      }
-      return true;
-    }
-  });
-
-  restoreFocusDescriptor(container, focusDescriptor);
-}
-
-function captureFocusDescriptor(container: HTMLElement): string | null {
-  const active = document.activeElement;
-  if (!(active instanceof HTMLElement) || !container.contains(active)) {
-    return null;
-  }
-
-  if (active.id) {
-    return `#${active.id}`;
-  }
-
-  if (active.dataset.action) {
-    const attrs = ['action', 'kind', 'value', 'tool', 'slot', 'role'] as const;
-    const parts = attrs
-      .map((key) => {
-        const dataKey = key as keyof DOMStringMap;
-        const value = active.dataset[dataKey];
-        return value ? `[data-${key}="${cssEscape(value)}"]` : '';
-      })
-      .join('');
-    return parts || null;
-  }
-
-  return active.getAttribute('data-focusable') === 'true' ? '[data-focusable="true"]' : null;
-}
-
-function restoreFocusDescriptor(container: HTMLElement, descriptor: string | null): void {
-  if (!descriptor) {
-    return;
-  }
-  const candidate = container.querySelector<HTMLElement>(descriptor);
-  if (candidate) {
-    candidate.focus({ preventScroll: true });
-  }
-}
-
-function cssEscape(value: string): string {
-  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
-    return CSS.escape(value);
-  }
-  return value.replace(/["\\]/g, '\\$&');
 }
 
 type FxLayer = {

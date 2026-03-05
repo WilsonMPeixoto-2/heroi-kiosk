@@ -1,4 +1,5 @@
 import type { ScreenId, SpectatorPublicState } from '../types';
+import type { GameModel } from '../types';
 
 export interface GameStoreState {
   screenId: ScreenId;
@@ -7,6 +8,17 @@ export interface GameStoreState {
     debug: boolean;
   };
   publicState: SpectatorPublicState | null;
+  uiView: {
+    model: GameModel;
+    uiCopy: {
+      attractTitle: string;
+      attractSubtitle: string;
+      attractCtaStart: string;
+      introTitle: string;
+      introLine1: string;
+      introLine2: string;
+    };
+  } | null;
 }
 
 type Listener = () => void;
@@ -19,7 +31,8 @@ let state: GameStoreState = {
   flags: {
     debug: false
   },
-  publicState: null
+  publicState: null,
+  uiView: null
 };
 
 export const gameStore = {
@@ -62,4 +75,3 @@ export const gameStore = {
 function emit(): void {
   listeners.forEach((listener) => listener());
 }
-
