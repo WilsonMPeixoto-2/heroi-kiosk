@@ -984,6 +984,7 @@ function applyArmedToolToSlot(slotId: string): void {
       void narrationHooks.onSlotComplete(slot.id).then((cue) => {
         setFeedbackFromCue(cue.text);
       });
+      emitLottie('slot');
       triggerHaptics([20, 18, 35]);
     } else {
       void narrationHooks.onRepairHit(true).then((cue) => {
@@ -1053,9 +1054,11 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
     soundscape.play('result');
     soundscape.play('reward');
     vfx.successWave();
+    emitLottie('result');
     triggerHaptics([35, 22, 70]);
   } else if (mode === 'partial') {
     soundscape.play('repairComplete');
+    emitLottie('result');
     triggerHaptics([22, 20, 30]);
   } else {
     soundscape.play('cancel');
@@ -1532,6 +1535,16 @@ function triggerHaptics(pattern: number | number[]): void {
     const total = sequence.reduce((sum, part) => sum + part, 0);
     void haptics[0]?.pulse(0.75, Math.min(160, total));
   }
+}
+
+function emitLottie(mode: 'result' | 'slot'): void {
+  window.dispatchEvent(
+    new CustomEvent('heroi:lottie:play', {
+      detail: {
+        mode
+      }
+    })
+  );
 }
 
 function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): string {

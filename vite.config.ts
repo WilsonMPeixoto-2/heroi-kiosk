@@ -17,7 +17,8 @@ export default defineConfig({
         'assets/fx/*.png',
         'assets/icons/*.svg',
         'assets/icons/tools/*.svg',
-        'assets/audio/*.{wav,mp3,webm}'
+        'assets/audio/*.{wav,mp3,webm}',
+        'assets/lottie/*.json'
       ],
       manifest: {
         name: 'Herói do Futuro - Kiosk',
@@ -42,7 +43,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,avif,wav,mp3,webm}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,avif,wav,mp3,webm,json}'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         runtimeCaching: [
           {
