@@ -1,0 +1,8 @@
+file,source,license,date,notes
+public/assets/backgrounds/distopia.svg,custom in-house,proprietary-internal,2026-03-05,Generated for project theme system
+public/assets/backgrounds/lab.svg,custom in-house,proprietary-internal,2026-03-05,Generated for project theme system
+public/assets/backgrounds/reborn.svg,custom in-house,proprietary-internal,2026-03-05,Generated for project theme system
+public/assets/icons/icon-192.svg,custom in-house,proprietary-internal,2026-03-05,PWA icon
+public/assets/icons/icon-512.svg,custom in-house,proprietary-internal,2026-03-05,PWA icon
+public/assets/audio/ui-sprites.wav,custom generated procedural,proprietary-internal,2026-03-05,Generated via script for sprite SFX
+public/assets/audio/ambient-loop.wav,custom generated procedural,proprietary-internal,2026-03-05,Generated via script for loop ambience

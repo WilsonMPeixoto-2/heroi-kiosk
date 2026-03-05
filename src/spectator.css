@@ -1,0 +1,150 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Bahnschrift', 'Segoe UI', sans-serif;
+}
+
+body {
+  color: #ecf8ff;
+}
+
+#spectator-app {
+  min-height: 100vh;
+}
+
+.spectator-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 16px;
+  gap: 12px;
+  transition: background 0.4s ease;
+}
+
+.spectator-shell.state-distopia {
+  background: linear-gradient(155deg, #071527, #173f66);
+}
+
+.spectator-shell.state-lab {
+  background: linear-gradient(155deg, #092139, #145785);
+}
+
+.spectator-shell.state-reborn {
+  background: linear-gradient(155deg, #0f3652, #2f7d57);
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  letter-spacing: 0.05em;
+  color: #2de2e6;
+}
+
+header p {
+  margin: 6px 0 0;
+  color: #b2cee3;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 12px;
+}
+
+.avatar-panel,
+.progress-panel {
+  border: 1px solid rgba(157, 224, 255, 0.32);
+  border-radius: 16px;
+  background: rgba(9, 25, 44, 0.72);
+  backdrop-filter: blur(8px);
+  padding: 14px;
+}
+
+.avatar-panel {
+  display: grid;
+  place-items: center;
+}
+
+.avatar-big {
+  width: min(100%, 450px);
+}
+
+.toolkit-line {
+  margin: 8px 0 0;
+  color: #c6e2f5;
+  font-size: 0.92rem;
+}
+
+.idle-text {
+  color: #b8d5e8;
+  text-align: center;
+}
+
+.metric {
+  margin-bottom: 10px;
+}
+
+.metric small {
+  display: block;
+  color: #b6d3e7;
+  font-size: 0.74rem;
+}
+
+.metric strong {
+  font-size: 1.05rem;
+}
+
+.module-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.module-track i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ff8f66, #45cf78);
+  transition: width 0.28s ease;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.slot {
+  border: 1px solid rgba(157, 224, 255, 0.3);
+  border-radius: 11px;
+  padding: 8px;
+  background: rgba(12, 34, 57, 0.7);
+}
+
+.slot.is-done {
+  border-color: #45cf78;
+}
+
+.slot small {
+  display: block;
+  color: #b6d3e7;
+  font-size: 0.7rem;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 1000px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  .slots {
+    grid-template-columns: 1fr;
+  }
+}
