@@ -46,22 +46,27 @@ const refs = {
   slotRows: mustGetById('slotRows')
 };
 const captionOverlay = createSpectatorCaptionsOverlay(refs.shell ?? root);
+let captionTimerId: number | null = null;
 
 const dispose = SpectatorBus.onMessage((message) => {
   switch (message.type) {
     case 'RESET':
+      clearCaptionTimer();
       captionOverlay.clear();
       renderIdle();
       return;
     case 'CAPTION':
+      clearCaptionTimer();
       captionOverlay.show(message.payload.text);
       if (message.payload.durationMs && message.payload.durationMs > 0) {
-        window.setTimeout(() => {
+        captionTimerId = window.setTimeout(() => {
           captionOverlay.clear();
+          captionTimerId = null;
         }, message.payload.durationMs);
       }
       return;
     case 'CAPTION_CLEAR':
+      clearCaptionTimer();
       captionOverlay.clear();
       return;
     case 'SYNC':
@@ -73,6 +78,7 @@ const dispose = SpectatorBus.onMessage((message) => {
 });
 
 window.addEventListener('beforeunload', () => {
+  clearCaptionTimer();
   captionOverlay.destroy();
   dispose();
 });
@@ -180,4 +186,11 @@ function mustGetById(id: string): HTMLElement {
     throw new Error(`Elemento #${id} não encontrado`);
   }
   return element;
+}
+
+function clearCaptionTimer(): void {
+  if (captionTimerId !== null) {
+    window.clearTimeout(captionTimerId);
+    captionTimerId = null;
+  }
 }

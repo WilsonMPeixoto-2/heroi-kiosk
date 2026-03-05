@@ -161,6 +161,7 @@ let startInProgress = false;
 let dHoldTimeoutId: number | null = null;
 let lastFrameMs = performance.now();
 let lastSpectatorProgressBucket = -1;
+let skipNextResultScreenNarration = false;
 
 const uiCopy = {
   attractTitle: '',
@@ -396,50 +397,54 @@ async function beginSession(): Promise<void> {
   }
 
   startInProgress = true;
+  try {
+    const status = await orchestrator.startSession({
+      fullscreen: true,
+      spectator: true,
+      wakeLock: true
+    });
 
-  const status = await orchestrator.startSession({
-    fullscreen: true,
-    spectator: true,
-    wakeLock: true
-  });
+    narration.markStartGesture();
+    await soundscape.activate();
+    soundscape.play('confirm');
 
-  narration.markStartGesture();
-  await soundscape.activate();
-  soundscape.play('confirm');
+    if (status.popupBlocked) {
+      refs.spectatorRetry.classList.add('warning');
+    } else {
+      refs.spectatorRetry.classList.remove('warning');
+    }
+    if (!status.fullscreenReady) {
+      ops.onFullscreenFail();
+    }
+    if (status.popupBlocked) {
+      ops.onPopupBlocked();
+    }
+    if (!status.wakeLockReady) {
+      ops.onWakeLockFail();
+    }
 
-  if (status.popupBlocked) {
-    refs.spectatorRetry.classList.add('warning');
-  } else {
-    refs.spectatorRetry.classList.remove('warning');
+    model.sessionStarted = true;
+    model.missionMsLeft = MISSION_TOTAL_MS;
+    model.toolkit = [];
+    model.repair = {
+      armedTool: null,
+      slotProgress: createInitialSlotProgress(),
+      feedback: get<string>('screens.repair.initialFeedback')
+    };
+    model.comboStreak = 0;
+    model.maxCombo = 0;
+    model.resultBadge = 'Selo Inicial';
+    model.resultTitle = 'Missão em andamento';
+    model.resultMessage = 'Siga as etapas e restaure o módulo.';
+    ops.startRun(input.getSource());
+
+    startMissionTimer();
+    machine.transition('INTRO');
+  } catch {
+    toasts.show('Não foi possível iniciar a sessão. Tente novamente.', 'warn', 3200);
+  } finally {
+    startInProgress = false;
   }
-  if (!status.fullscreenReady) {
-    ops.onFullscreenFail();
-  }
-  if (status.popupBlocked) {
-    ops.onPopupBlocked();
-  }
-  if (!status.wakeLockReady) {
-    ops.onWakeLockFail();
-  }
-
-  model.sessionStarted = true;
-  model.missionMsLeft = MISSION_TOTAL_MS;
-  model.toolkit = [];
-  model.repair = {
-    armedTool: null,
-    slotProgress: createInitialSlotProgress(),
-    feedback: get<string>('screens.repair.initialFeedback')
-  };
-  model.comboStreak = 0;
-  model.maxCombo = 0;
-  model.resultBadge = 'Selo Inicial';
-  model.resultTitle = 'Missão em andamento';
-  model.resultMessage = 'Siga as etapas e restaure o módulo.';
-  ops.startRun(input.getSource());
-
-  startMissionTimer();
-  machine.transition('INTRO');
-  startInProgress = false;
 }
 
 function onScreenEntered(screen: ScreenId): void {
@@ -480,9 +485,19 @@ function onScreenEntered(screen: ScreenId): void {
         const completed = getCompletedSlotsCount();
         const outcome = completed >= 2 ? 'partial' : 'timeout';
         if (outcome === 'timeout') {
-          void narrationHooks.onRepairTimeout().then((cue) => {
-            model.repair.feedback = cue.text;
-          });
+          void narrationHooks.onRepairTimeout()
+            .then((cue) => {
+              model.repair.feedback = cue.text;
+              if (machine.current === 'REPAIR') {
+                renderCurrentScreen();
+              }
+            })
+            .finally(() => {
+              window.setTimeout(() => {
+                finishMission(outcome);
+              }, 620);
+            });
+          return;
         }
         finishMission(outcome);
       });
@@ -499,6 +514,10 @@ function onScreenEntered(screen: ScreenId): void {
   }
 
   refreshUiCopyForScreen(screen);
+  if (screen === 'RESULT' && skipNextResultScreenNarration) {
+    skipNextResultScreenNarration = false;
+    return;
+  }
   void narrationHooks.onScreenEnter(screen);
 }
 
@@ -971,6 +990,10 @@ function getCompletedSlotsCount(): number {
 }
 
 function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
+  if (machine.current === 'RESULT') {
+    return;
+  }
+
   clearScreenTimeout();
   stopMissionTimer();
   model.sessionStarted = false;
@@ -998,6 +1021,7 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
     soundscape.play('cancel');
   }
 
+  skipNextResultScreenNarration = true;
   void narrationHooks.onResult(mode);
 
   ops.endRun({
