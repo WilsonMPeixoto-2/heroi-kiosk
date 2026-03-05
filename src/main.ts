@@ -1374,11 +1374,13 @@ function renderToolIcon(toolId: string, fallback: string): string {
 
 function animateScreenTransition(screen: ScreenId): void {
   const content = refs.screenRoot.querySelector<HTMLElement>('.content');
+  const screenEl = refs.screenRoot.querySelector<HTMLElement>('.screen');
+  const bgEl = refs.screenRoot.querySelector<HTMLElement>('.screen-bg');
   if (!content) {
     return;
   }
 
-  gsap.killTweensOf(content);
+  gsap.killTweensOf([content, screenEl, bgEl]);
   if (reduceMotion) {
     gsap.fromTo(content, { autoAlpha: 0.96 }, { autoAlpha: 1, duration: 0.14, ease: 'none' });
     return;
@@ -1393,16 +1395,98 @@ function animateScreenTransition(screen: ScreenId): void {
     RESULT: { autoAlpha: 0, scale: 0.96, filter: 'blur(12px)' }
   };
 
-  gsap.fromTo(content, profiles[screen], {
-    autoAlpha: 1,
-    x: 0,
-    y: 0,
-    scale: 1,
-    rotationX: 0,
-    filter: 'blur(0px)',
-    duration: 0.44,
-    ease: screen === 'RESULT' ? 'back.out(1.08)' : 'power2.out'
-  });
+  const timeline = gsap.timeline({ defaults: { overwrite: 'auto' } });
+  if (bgEl) {
+    timeline.fromTo(
+      bgEl,
+      { autoAlpha: 0.62, scale: 1.08, filter: 'saturate(0.9) contrast(0.95) blur(3px)' },
+      { autoAlpha: 1, scale: 1.02, filter: 'saturate(1.08) contrast(1.04) blur(0px)', duration: 0.52, ease: 'power1.out' },
+      0
+    );
+  }
+  if (screenEl && (screen === 'ATTRACT' || screen === 'RESULT')) {
+    timeline.fromTo(
+      screenEl,
+      { boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 rgba(45,226,230,0)' },
+      { boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06), 0 0 32px rgba(45,226,230,.24)', duration: 0.34, ease: 'power2.out' },
+      0.06
+    );
+  }
+
+  timeline.fromTo(
+    content,
+    profiles[screen],
+    {
+      autoAlpha: 1,
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotationX: 0,
+      filter: 'blur(0px)',
+      duration: 0.44,
+      ease: screen === 'RESULT' ? 'back.out(1.08)' : 'power2.out'
+    },
+    0.06
+  );
+
+  const headline = content.querySelector<HTMLElement>('h2');
+  const paragraphs = Array.from(content.querySelectorAll<HTMLElement>('p'));
+  const buttons = Array.from(content.querySelectorAll<HTMLElement>('.button-row .btn'));
+  const featured = getFeaturedMotionTargets(content, screen);
+
+  if (headline) {
+    timeline.fromTo(
+      headline,
+      { autoAlpha: 0, y: 16, letterSpacing: '0.03em' },
+      { autoAlpha: 1, y: 0, letterSpacing: '0.01em', duration: 0.36, ease: 'power2.out' },
+      0.12
+    );
+  }
+
+  if (paragraphs.length > 0) {
+    timeline.fromTo(
+      paragraphs.slice(0, 2),
+      { autoAlpha: 0, y: 10 },
+      { autoAlpha: 1, y: 0, duration: 0.3, ease: 'power1.out', stagger: 0.05 },
+      0.16
+    );
+  }
+
+  if (featured.length > 0) {
+    timeline.fromTo(
+      featured,
+      { autoAlpha: 0, y: 14, scale: 0.98 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: 'power2.out', stagger: 0.018 },
+      0.2
+    );
+  }
+
+  if (buttons.length > 0) {
+    timeline.fromTo(
+      buttons,
+      { autoAlpha: 0, y: 10 },
+      { autoAlpha: 1, y: 0, duration: 0.26, ease: 'power2.out', stagger: 0.04 },
+      0.28
+    );
+  }
+}
+
+function getFeaturedMotionTargets(content: HTMLElement, screen: ScreenId): HTMLElement[] {
+  switch (screen) {
+    case 'AVATAR':
+      return [
+        ...Array.from(content.querySelectorAll<HTMLElement>('.swatch')).slice(0, 8),
+        ...Array.from(content.querySelectorAll<HTMLElement>('.pill-option')).slice(0, 6)
+      ];
+    case 'TOOLKIT':
+      return Array.from(content.querySelectorAll<HTMLElement>('.tool-card')).slice(0, 8);
+    case 'REPAIR':
+      return Array.from(content.querySelectorAll<HTMLElement>('.slot, .tool-chip')).slice(0, 10);
+    case 'RESULT':
+      return Array.from(content.querySelectorAll<HTMLElement>('.summary-grid article')).slice(0, 6);
+    default:
+      return [];
+  }
 }
 
 function updateAvatarPreviewInPlace(): void {
