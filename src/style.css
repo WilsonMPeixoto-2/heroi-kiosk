@@ -571,9 +571,22 @@ body.admin-enabled .admin-only {
   animation: avatar-bob 2.8s ease-in-out infinite;
 }
 
+.avatar-svg.avatar-premium .avatar-bob {
+  animation: avatar-breathe 3.6s ease-in-out infinite;
+}
+
+.avatar-svg.avatar-premium .avatar-tilt {
+  transform-origin: 50% 56%;
+  animation: avatar-drift 5.8s ease-in-out infinite;
+}
+
 .avatar-svg .avatar-eye-group {
   transform-origin: 50% 50%;
   animation: avatar-blink 4.4s infinite;
+}
+
+.avatar-svg.avatar-premium .avatar-accessory {
+  filter: drop-shadow(0 0 6px rgba(66, 236, 255, 0.26));
 }
 
 .avatar-svg text {
@@ -587,6 +600,26 @@ body.admin-enabled .admin-only {
   }
   50% {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes avatar-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.012);
+  }
+}
+
+@keyframes avatar-drift {
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
   }
 }
 
@@ -1029,6 +1062,7 @@ body.admin-enabled .admin-only {
 @media (prefers-reduced-motion: reduce) {
   .screen-bg,
   .avatar-svg .avatar-bob,
+  .avatar-svg .avatar-tilt,
   .avatar-svg .avatar-eye-group,
   .btn,
   .timer.danger {

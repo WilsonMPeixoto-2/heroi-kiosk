@@ -2,6 +2,7 @@ import { ACCESSORIES, DREAM_SLOTS, EYE_COLORS, HAIR_COLORS, OUTFIT_COLORS, SKIN_
 import { SCREEN_ORDER } from '../core/constants';
 import { getContentDataset } from '../content/copy';
 import { useGameStore } from './useGameStore';
+import { AvatarView } from './components/AvatarView';
 
 const content = getContentDataset();
 
@@ -93,7 +94,14 @@ function AvatarScreen() {
         <p>{content.screens.avatar.subtitle}</p>
         <div class="avatar-layout">
           <div class="avatar-preview">
-            <AvatarSvg avatar={avatar} />
+            <AvatarView
+              skinTone={avatar.skin}
+              hairStyle={avatar.hair}
+              eyeStyle={avatar.eyes}
+              outfitStyle={avatar.outfit}
+              accessoryId={avatar.accessory}
+              mood="confident"
+            />
           </div>
           <div class="avatar-controls">
             <Swatches label="Tom de pele" kind="skin" colors={SKIN_COLORS} selectedIndex={avatar.skin} />
@@ -290,35 +298,6 @@ function Swatches(props: { label: string; kind: 'skin' | 'hair' | 'eyes' | 'outf
         ))}
       </div>
     </div>
-  );
-}
-
-function AvatarSvg(props: { avatar: { skin: number; hair: number; eyes: number; outfit: number; accessory: number } }) {
-  const skin = SKIN_COLORS[props.avatar.skin] ?? SKIN_COLORS[0];
-  const hair = HAIR_COLORS[props.avatar.hair] ?? HAIR_COLORS[0];
-  const eyes = EYE_COLORS[props.avatar.eyes] ?? EYE_COLORS[0];
-  const outfit = OUTFIT_COLORS[props.avatar.outfit] ?? OUTFIT_COLORS[0];
-  return (
-    <svg viewBox="0 0 220 260" class="avatar-svg" role="img" aria-label="Avatar personalizável">
-      <g class="avatar-bob">
-        <ellipse cx="110" cy="238" rx="54" ry="12" fill="rgba(0,0,0,.28)" />
-        <circle cx="110" cy="124" r="90" fill="rgba(45,226,230,.12)" />
-        <rect x="86" y="186" width="18" height="42" rx="7" fill={outfit} />
-        <rect x="116" y="186" width="18" height="42" rx="7" fill={outfit} />
-        <rect x="74" y="104" width="72" height="90" rx="22" fill={outfit} stroke="rgba(0,0,0,.34)" stroke-width="2" />
-        <rect x="72" y="42" width="76" height="76" rx="26" fill={skin} stroke="rgba(0,0,0,.38)" stroke-width="2.4" />
-        <path d="M66 56 Q110 18 154 56 L154 78 L66 78 Z" fill={hair} stroke="rgba(0,0,0,.3)" stroke-width="2" />
-        <g class="avatar-eye-group">
-          <ellipse cx="91" cy="84" rx="11" ry="8.2" fill="white" />
-          <ellipse cx="129" cy="84" rx="11" ry="8.2" fill="white" />
-          <circle cx="91" cy="84" r="4.6" fill={eyes} />
-          <circle cx="129" cy="84" r="4.6" fill={eyes} />
-        </g>
-      </g>
-      <text x="110" y="254" text-anchor="middle" fill="rgba(234,246,255,.92)" font-size="11.5" font-weight="700">
-        {ACCESSORIES[props.avatar.accessory]}
-      </text>
-    </svg>
   );
 }
 
