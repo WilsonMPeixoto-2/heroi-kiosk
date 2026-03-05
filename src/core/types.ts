@@ -59,7 +59,7 @@ export const SKIN_COLORS = ['#f4c7a1', '#c48f68', '#925c3f', '#5e3523'];
 export const HAIR_COLORS = ['#281c16', '#8c6239', '#1a1a1a', '#d4a45f'];
 export const EYE_COLORS = ['#263238', '#0d47a1', '#1b5e20', '#4e342e'];
 export const OUTFIT_COLORS = ['#25c9ff', '#7d6bff', '#26c281', '#ff7a59'];
-export const ACCESSORIES = ['Sem Acessório', 'Viseira', 'Pulseira Tech', 'Capa de Missão'];
+export const ACCESSORIES = ['Sem Acessório', 'Viseira', 'Pulseira Tech', 'Capa de Missão', 'Óculos Neon', 'Pin Solar'];
 
 export const TOOLS: ToolItem[] = [
   {
