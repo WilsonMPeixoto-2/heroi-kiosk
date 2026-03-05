@@ -1,5 +1,6 @@
 import type { Action, InputSource } from '../core/input/actions';
 import type { ScreenId } from '../core/types';
+import type { VariantTier } from '../content/schema';
 import {
   createEmptySessionMetrics,
   OPS_MAX_EVENTS_PER_SESSION,
@@ -111,6 +112,15 @@ export class OpsRecorder {
   onWakeLockFail(): void {
     this.current.wakeLockFailCount += 1;
     this.recordEvent({ type: 'wake_lock_fail', screen: this.screenTimer.getActive() });
+  }
+
+  onCopyVariantPicked(key: string, tier: VariantTier): void {
+    this.current.copyVariantCounts[tier] = (this.current.copyVariantCounts[tier] ?? 0) + 1;
+    this.recordEvent({
+      type: 'copy_variant',
+      screen: this.screenTimer.getActive(),
+      details: `${key}|${tier}`
+    });
   }
 
   onAvatarChoice(category: AvatarCategory, optionId: string | number): void {
@@ -243,6 +253,8 @@ export class OpsRecorder {
         acc.popupBlockedCount += session.popupBlockedCount;
         acc.fullscreenFailCount += session.fullscreenFailCount;
         acc.wakeLockFailCount += session.wakeLockFailCount;
+        acc.rareVariants += session.copyVariantCounts.rare;
+        acc.legendaryVariants += session.copyVariantCounts.legendary;
         return acc;
       },
       {
@@ -252,7 +264,9 @@ export class OpsRecorder {
         remapUsedCount: 0,
         popupBlockedCount: 0,
         fullscreenFailCount: 0,
-        wakeLockFailCount: 0
+        wakeLockFailCount: 0,
+        rareVariants: 0,
+        legendaryVariants: 0
       }
     );
 

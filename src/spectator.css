@@ -24,6 +24,8 @@ body {
   padding: 16px;
   gap: 12px;
   transition: background 0.4s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .spectator-shell.state-distopia {
@@ -48,6 +50,13 @@ header h1 {
 header p {
   margin: 6px 0 0;
   color: #b2cee3;
+}
+
+#progressLine {
+  margin-top: 8px;
+  color: #d2ecff;
+  font-size: clamp(0.96rem, 1.5vw, 1.26rem);
+  font-weight: 700;
 }
 
 main {
@@ -137,6 +146,34 @@ main {
   color: #b6d3e7;
   font-size: 0.7rem;
   margin-bottom: 2px;
+}
+
+.captions-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: min(92%, 980px);
+  border: 1px solid rgba(140, 225, 255, 0.6);
+  border-radius: 14px;
+  background: rgba(4, 14, 28, 0.88);
+  color: #f2fbff;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+  padding: 12px 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.captions-spectator {
+  font-size: clamp(1.05rem, 2vw, 1.58rem);
+}
+
+.captions-overlay.is-highlight {
+  border-color: rgba(255, 219, 123, 0.95);
 }
 
 @media (max-width: 1000px) {

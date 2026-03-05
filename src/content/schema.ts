@@ -13,6 +13,8 @@ export interface VariantSelection {
   tier: VariantTier;
 }
 
+export type CopyParams = Record<string, string | number>;
+
 export interface ScreenCopy {
   attract: {
     pill: string;

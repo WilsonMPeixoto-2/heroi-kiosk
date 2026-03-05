@@ -33,6 +33,13 @@ import { IDLE_RESET_MS, KIOSK_RUNTIME_FLAGS, SCREEN_ORDER, SCREEN_TIMEOUTS_MS, T
 import { OpsRecorder } from './ops/recorder';
 import { OpsDebugPanel } from './ops/debugPanel';
 import { createTimestampedFileName, downloadTextFile, exportEventsCsv, exportSessionJson, exportSessionsSummaryCsv } from './ops/export';
+import { createCaptionsOverlay } from './ui/captionsOverlay';
+import { createNarrationHooks } from './narration/hooks';
+import { CaptionEngine } from './narration/captionEngine';
+import { NarrationDirector } from './narration/narrationDirector';
+import { narrationModeLabel } from './narration/settings';
+import { get, getContentDataset, getVariant, type RngFn } from './content/copy';
+import type { VariantSelection } from './content/schema';
 
 const THEMES = new Set(['neon', 'clean', 'comic']);
 
@@ -43,6 +50,7 @@ if (!appRoot) {
 
 applyThemeFromQuery();
 applyKioskModeClasses();
+const content = getContentDataset();
 
 appRoot.innerHTML = `
   <div class="app-shell atmosphere">
@@ -62,6 +70,8 @@ appRoot.innerHTML = `
         </div>
         <div class="hud-buttons">
           <button type="button" class="mini-btn" id="audioToggle">Som: ON</button>
+          <button type="button" class="mini-btn" id="narrationMode">Narração: Legendas</button>
+          <button type="button" class="mini-btn" id="narrationMute">Narração: ON</button>
           <button type="button" class="mini-btn" id="spectatorRetry">Abrir Tela do Público</button>
         </div>
       </div>
@@ -89,6 +99,8 @@ const refs = {
   vfxHost: mustGetById<HTMLDivElement>('vfxHost'),
   screenRoot: mustGetById<HTMLDivElement>('screenRoot'),
   audioToggle: mustGetById<HTMLButtonElement>('audioToggle'),
+  narrationMode: mustGetById<HTMLButtonElement>('narrationMode'),
+  narrationMute: mustGetById<HTMLButtonElement>('narrationMute'),
   spectatorRetry: mustGetById<HTMLButtonElement>('spectatorRetry')
 };
 
@@ -104,6 +116,15 @@ const remapWizard = new RemapWizard(input, {
 const toasts = new OverlayToasts();
 const orchestrator = new StartOrchestrator(toasts);
 const soundscape = new Soundscape();
+const captionEngine = new CaptionEngine({
+  playerOverlay: createCaptionsOverlay(refs.screenRoot.parentElement ?? refs.screenRoot),
+  onSpectatorForward: (text, durationMs) => spectatorBus.caption(text, durationMs),
+  onSpectatorClear: () => spectatorBus.clearCaption()
+});
+const narration = new NarrationDirector(captionEngine, (key, tier) => {
+  ops.onCopyVariantPicked(key, tier);
+});
+const narrationHooks = createNarrationHooks(narration, `narration-seed-${Date.now()}`);
 const debugPanel = new OpsDebugPanel({
   getSnapshot: () => ops.getDashboardSnapshot(),
   onExportJson: () => {
@@ -139,6 +160,17 @@ let screenTimeoutId: number | null = null;
 let startInProgress = false;
 let dHoldTimeoutId: number | null = null;
 let lastFrameMs = performance.now();
+let lastSpectatorProgressBucket = -1;
+
+const uiCopy = {
+  attractTitle: '',
+  attractSubtitle: '',
+  attractCtaStart: '',
+  introTitle: '',
+  introLine1: '',
+  introLine2: ''
+};
+const copyRng: RngFn = createContentRng();
 
 const hardening = KIOSK_RUNTIME_FLAGS.hardening
   ? initHardening({ rootEl: appRoot })
@@ -179,6 +211,19 @@ refs.audioToggle.addEventListener('click', () => {
   const enabled = !soundscape.isEnabled();
   soundscape.setEnabled(enabled);
   refs.audioToggle.textContent = `Som: ${enabled ? 'ON' : 'OFF'}`;
+  idle.touch();
+});
+updateNarrationUi();
+
+refs.narrationMode.addEventListener('click', () => {
+  narration.cycleMode();
+  updateNarrationUi();
+  idle.touch();
+});
+
+refs.narrationMute.addEventListener('click', () => {
+  narration.toggleMuted();
+  updateNarrationUi();
   idle.touch();
 });
 
@@ -268,6 +313,7 @@ window.addEventListener('beforeunload', () => {
   focusNavigator.dispose();
   visibility.dispose();
   hardening.dispose();
+  narration.destroy();
   soundscape.stopAmbient();
   vfx.destroy();
 });
@@ -307,6 +353,10 @@ function loop(nowMs: number): void {
 
 function handleActionNavigation(): void {
   const current = machine.current;
+
+  if (input.wasPressed('SKIP')) {
+    narration.skipCurrent();
+  }
 
   if (current === 'ATTRACT' && (input.wasPressed('START') || input.wasPressed('CONFIRM'))) {
     void beginSession();
@@ -353,6 +403,7 @@ async function beginSession(): Promise<void> {
     wakeLock: true
   });
 
+  narration.markStartGesture();
   await soundscape.activate();
   soundscape.play('confirm');
 
@@ -377,7 +428,7 @@ async function beginSession(): Promise<void> {
   model.repair = {
     armedTool: null,
     slotProgress: createInitialSlotProgress(),
-    feedback: 'Selecione uma ferramenta e aplique em um núcleo.'
+    feedback: get<string>('screens.repair.initialFeedback')
   };
   model.comboStreak = 0;
   model.maxCombo = 0;
@@ -419,7 +470,7 @@ function onScreenEntered(screen: ScreenId): void {
       model.repair = {
         armedTool: model.toolkit[0] ?? null,
         slotProgress: createInitialSlotProgress(),
-        feedback: 'Aplique 3 núcleos para completar a missão.'
+        feedback: get<string>('screens.repair.initialFeedback')
       };
       model.comboStreak = 0;
       ops.setRepairProgress(0);
@@ -427,7 +478,13 @@ function onScreenEntered(screen: ScreenId): void {
 
       setScreenTimeout(SCREEN_TIMEOUTS_MS.REPAIR, () => {
         const completed = getCompletedSlotsCount();
-        finishMission(completed >= 2 ? 'partial' : 'timeout');
+        const outcome = completed >= 2 ? 'partial' : 'timeout';
+        if (outcome === 'timeout') {
+          void narrationHooks.onRepairTimeout().then((cue) => {
+            model.repair.feedback = cue.text;
+          });
+        }
+        finishMission(outcome);
       });
       break;
     }
@@ -440,6 +497,9 @@ function onScreenEntered(screen: ScreenId): void {
     default:
       break;
   }
+
+  refreshUiCopyForScreen(screen);
+  void narrationHooks.onScreenEnter(screen);
 }
 
 function renderCurrentScreen(): void {
@@ -458,15 +518,12 @@ function renderScreenHtml(): string {
         <section class="screen screen-attract" data-testid="screen-attract">
           <div class="screen-bg bg-distopia"></div>
           <div class="content">
-            <p class="pill">Dinâmica Sensorial + Tecnológica</p>
-            <h2>A cidade perdeu a capacidade de sonhar.</h2>
-            <p>
-              Crianças ficaram presas no uso passivo da tecnologia. Sua missão é montar o herói,
-              preparar a mala e restaurar o Módulo dos Sonhos em até 2:30.
-            </p>
+            <p class="pill">${content.screens.attract.pill}</p>
+            <h2>${uiCopy.attractTitle}</h2>
+            <p>${uiCopy.attractSubtitle}</p>
             <div class="button-row">
-              <button class="btn primary" data-action="start-session" data-primary="1" data-focusable="true" data-testid="start-session">APERTE START</button>
-              <button class="btn ghost" data-action="open-spectator" data-focusable="true">Abrir Tela do Público</button>
+              <button class="btn primary" data-action="start-session" data-primary="1" data-focusable="true" data-testid="start-session">${uiCopy.attractCtaStart}</button>
+              <button class="btn ghost" data-action="open-spectator" data-focusable="true">${content.screens.attract.ctaSpectator}</button>
             </div>
           </div>
         </section>
@@ -476,16 +533,11 @@ function renderScreenHtml(): string {
         <section class="screen screen-intro" data-testid="screen-intro">
           <div class="screen-bg bg-distopia"></div>
           <div class="content">
-            <h2>Distopia curta, ação imediata</h2>
-            <p>
-              O Módulo dos Sonhos entrou em curto. Sem comunicação, sem colaboração e sem criatividade,
-              a cidade desliga suas possibilidades.
-            </p>
-            <p>
-              Você tem pouco tempo para mudar essa história.
-            </p>
+            <h2>${uiCopy.introTitle}</h2>
+            <p>${uiCopy.introLine1}</p>
+            <p>${uiCopy.introLine2}</p>
             <div class="button-row">
-              <button class="btn primary" data-action="skip-intro" data-primary="1" data-focusable="true" data-testid="skip-intro">Continuar</button>
+              <button class="btn primary" data-action="skip-intro" data-primary="1" data-focusable="true" data-testid="skip-intro">${content.screens.intro.continueCta}</button>
             </div>
           </div>
         </section>
@@ -551,8 +603,8 @@ function renderAvatarScreen(): string {
     <section class="screen screen-avatar" data-testid="screen-avatar">
       <div class="screen-bg bg-lab"></div>
       <div class="content">
-        <h2>Monte seu avatar protagonista</h2>
-        <p>Escolhas rápidas: pele, cabelo, olhos, traje e acessório.</p>
+        <h2>${content.screens.avatar.title}</h2>
+        <p>${content.screens.avatar.subtitle}</p>
         <div class="avatar-layout">
           <div class="avatar-preview">
             ${renderAvatarSvg()}
@@ -566,8 +618,8 @@ function renderAvatarScreen(): string {
           </div>
         </div>
         <div class="button-row">
-          <button class="btn ghost" data-action="back-intro" data-role="back" data-focusable="true">Voltar</button>
-          <button class="btn primary" data-action="go-toolkit" data-primary="1" data-focusable="true">Confirmar Avatar</button>
+          <button class="btn ghost" data-action="back-intro" data-role="back" data-focusable="true">${content.screens.avatar.backCta}</button>
+          <button class="btn primary" data-action="go-toolkit" data-primary="1" data-focusable="true">${content.screens.avatar.confirmCta}</button>
         </div>
       </div>
     </section>
@@ -587,7 +639,7 @@ function renderToolkitScreen(): string {
         data-focusable="true">
         <span class="icon">${tool.icon}</span>
         <strong>${tool.label}</strong>
-        <p>${tool.summary}</p>
+        <p>${content.screens.toolkit.tooltips[tool.id] ?? tool.summary}</p>
       </button>
     `;
   }).join('');
@@ -596,15 +648,15 @@ function renderToolkitScreen(): string {
     <section class="screen screen-toolkit" data-testid="screen-toolkit">
       <div class="screen-bg bg-lab"></div>
       <div class="content">
-        <h2>Mala de Ferramentas</h2>
-        <p>Escolha 3 ferramentas para ativar o reparo do módulo.</p>
+        <h2>${content.screens.toolkit.title}</h2>
+        <p>${content.screens.toolkit.subtitle}</p>
         <div class="tool-grid">${cards}</div>
-        <p class="hint">Selecionadas: <strong>${model.toolkit.length}/3</strong></p>
+        <p class="hint">${content.screens.toolkit.selectedHint}: <strong>${model.toolkit.length}/3</strong></p>
         <div class="button-row">
-          <button class="btn ghost" data-action="back-avatar" data-role="back" data-focusable="true">Voltar</button>
+          <button class="btn ghost" data-action="back-avatar" data-role="back" data-focusable="true">${content.screens.toolkit.backCta}</button>
           <button class="btn primary" data-action="go-repair" data-primary="1" data-focusable="true" ${
             model.toolkit.length !== 3 ? 'disabled' : ''
-          }>Iniciar Reparo</button>
+          }>${content.screens.toolkit.startRepairCta}</button>
         </div>
       </div>
     </section>
@@ -630,9 +682,10 @@ function renderRepairScreen(): string {
     const progress = model.repair.slotProgress[slot.id] ?? 0;
     const done = progress >= 2;
     const status = done ? 'ONLINE' : `${progress}/2`;
+    const slotLabel = content.screens.repair.slotNames[slot.id] ?? slot.label;
     return `
       <button class="slot ${done ? 'is-done' : ''}" data-action="apply-tool" data-slot="${slot.id}" data-focusable="true">
-        <strong>${slot.label}</strong>
+        <strong>${slotLabel}</strong>
         <small>${status}</small>
       </button>
     `;
@@ -642,18 +695,18 @@ function renderRepairScreen(): string {
     <section class="screen screen-repair" data-testid="screen-repair">
       <div class="screen-bg bg-lab"></div>
       <div class="content">
-        <h2>Conserte o Módulo dos Sonhos</h2>
-        <p>Ative 3 de 4 núcleos para restaurar a cidade.</p>
+        <h2>${content.screens.repair.title}</h2>
+        <p>${content.screens.repair.subtitle}</p>
         <div class="repair-tools">${tools}</div>
         <div class="repair-grid">${slots}</div>
         <p class="hint">${model.repair.feedback}</p>
-        <p class="hint">Progresso: <strong>${completed}/4</strong></p>
-        <p class="hint">Combo atual: <strong>x${model.comboStreak}</strong> | Melhor combo: <strong>x${model.maxCombo}</strong></p>
+        <p class="hint">${content.screens.repair.progressLabel}: <strong>${completed}/4</strong></p>
+        <p class="hint">${content.screens.repair.comboLabel}: <strong>x${model.comboStreak}</strong> | Melhor combo: <strong>x${model.maxCombo}</strong></p>
         <div class="button-row">
-          <button class="btn ghost" data-action="back-toolkit" data-role="back" data-focusable="true">Voltar</button>
+          <button class="btn ghost" data-action="back-toolkit" data-role="back" data-focusable="true">${content.screens.repair.backCta}</button>
           <button class="btn primary" data-action="finish-repair" data-primary="1" data-focusable="true" ${
             completed < 3 ? 'disabled' : ''
-          }>Finalizar Missão</button>
+          }>${content.screens.repair.finishCta}</button>
         </div>
       </div>
     </section>
@@ -669,31 +722,31 @@ function renderResultScreen(): string {
         <p>${model.resultMessage}</p>
         <div class="summary-grid">
           <article>
-            <small>Ferramentas usadas</small>
+            <small>${content.screens.result.summaryLabels.toolsUsed}</small>
             <strong>${model.toolkit
               .map((toolId) => TOOLS.find((tool) => tool.id === toolId)?.label ?? toolId)
               .join(', ')}</strong>
           </article>
           <article>
-            <small>Núcleos restaurados</small>
+            <small>${content.screens.result.summaryLabels.restoredSlots}</small>
             <strong>${getCompletedSlotsCount()} / 4</strong>
           </article>
           <article>
-            <small>Energia restante</small>
+            <small>${content.screens.result.summaryLabels.energyLeft}</small>
             <strong>${Math.max(0, Math.round((model.missionMsLeft / MISSION_TOTAL_MS) * 100))}%</strong>
           </article>
           <article>
-            <small>Combo máximo</small>
+            <small>${content.screens.result.summaryLabels.maxCombo}</small>
             <strong>x${model.maxCombo}</strong>
           </article>
           <article>
-            <small>Selo do Herói</small>
+            <small>${content.screens.result.summaryLabels.heroBadge}</small>
             <strong>${model.resultBadge}</strong>
           </article>
         </div>
         <div class="button-row">
-           <button class="btn ghost" data-action="play-again" data-primary="1" data-focusable="true" data-testid="play-again">Jogar novamente</button>
-          <button class="btn primary" data-action="go-memory" data-focusable="true">Ir para Jogo da Memória</button>
+           <button class="btn ghost" data-action="play-again" data-primary="1" data-focusable="true" data-testid="play-again">${content.screens.result.playAgainCta}</button>
+          <button class="btn primary" data-action="go-memory" data-focusable="true">${content.screens.result.goMemoryCta}</button>
         </div>
       </div>
     </section>
@@ -726,6 +779,7 @@ function handleClickAction(action: string, node: HTMLElement): void {
     }
     case 'skip-intro':
       soundscape.play('confirm');
+      narration.skipCurrent();
       machine.transition('AVATAR');
       break;
     case 'avatar-set': {
@@ -839,17 +893,29 @@ function applyArmedToolToSlot(slotId: string): void {
   const slot = DREAM_SLOTS.find((entry) => entry.id === slotId);
   const slotIndex = DREAM_SLOTS.findIndex((entry) => entry.id === slotId);
   const armedTool = model.repair.armedTool;
+  const setFeedbackFromCue = (text: string, append = false): void => {
+    model.repair.feedback = append ? `${model.repair.feedback} ${text}`.trim() : text;
+    if (machine.current === 'REPAIR') {
+      renderCurrentScreen();
+      syncSpectator();
+    }
+  };
 
   if (!slot || !armedTool) {
-    model.repair.feedback = 'Selecione uma ferramenta antes de aplicar.';
+    void narrationHooks.onRepairNeedTool().then((cue) => {
+      setFeedbackFromCue(cue.text);
+    });
     soundscape.play('cancel');
     ops.onRepairHit(slotId, armedTool ?? 'none', false);
     return;
   }
 
+  const slotName = content.screens.repair.slotNames[slot.id] ?? slot.label;
   const current = model.repair.slotProgress[slot.id] ?? 0;
   if (current >= 2) {
-    model.repair.feedback = `${slot.label} já está estável.`;
+    void narrationHooks.onRepairAlreadyStable(slotName).then((cue) => {
+      setFeedbackFromCue(cue.text);
+    });
     return;
   }
 
@@ -859,14 +925,24 @@ function applyArmedToolToSlot(slotId: string): void {
     ops.onRepairHit(slot.id, armedTool, true);
     model.comboStreak += 1;
     model.maxCombo = Math.max(model.maxCombo, model.comboStreak);
-    model.repair.feedback = now >= 2
-      ? `${slot.label} restaurada com sucesso.`
-      : `${slot.label} avançou para ${now}/2.`;
     soundscape.play(now >= 2 ? 'repairComplete' : 'repairHit');
+
+    if (now >= 2) {
+      void narrationHooks.onSlotComplete(slot.id).then((cue) => {
+        setFeedbackFromCue(cue.text);
+      });
+    } else {
+      void narrationHooks.onRepairHit(true).then((cue) => {
+        setFeedbackFromCue(cue.text);
+      });
+    }
+
     if (model.comboStreak >= 3) {
-      model.repair.feedback += ` Combo x${model.comboStreak}!`;
       soundscape.play('reward');
       vfx.successWave();
+      void narrationHooks.onCombo(model.comboStreak).then((cue) => {
+        setFeedbackFromCue(cue.text, true);
+      });
     }
     if (now >= 2) {
       ops.onRepairSlotComplete(slot.id);
@@ -876,7 +952,9 @@ function applyArmedToolToSlot(slotId: string): void {
     model.repair.slotProgress[slot.id] = Math.max(0, current - 1);
     ops.onRepairHit(slot.id, armedTool, false);
     model.comboStreak = 0;
-    model.repair.feedback = 'Essa combinação não ajudou. Tente outra ferramenta.';
+    void narrationHooks.onRepairHit(false).then((cue) => {
+      setFeedbackFromCue(cue.text);
+    });
     soundscape.play('cancel');
     vfx.burst(0.24 + (slotIndex % 2) * 0.52, 0.45 + Math.floor(slotIndex / 2) * 0.2, 0xfb6542);
   }
@@ -896,26 +974,31 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
   clearScreenTimeout();
   stopMissionTimer();
   model.sessionStarted = false;
-  const rare = Math.random() < 0.05;
+  const titleSelection = pickVariantByPath(
+    `screens.result.${mode}.title`,
+    `RESULT.${mode}.title`
+  );
+  const messageSelection = pickVariantByPath(
+    `screens.result.${mode}.message`,
+    `RESULT.${mode}.message`
+  );
+
+  const rare = isRareTier(titleSelection.tier) || isRareTier(messageSelection.tier);
   model.resultBadge = pickResultBadge(mode, rare);
+  model.resultTitle = titleSelection.text;
+  model.resultMessage = messageSelection.text;
 
   if (mode === 'full') {
-    model.resultTitle = rare ? 'Missão lendária desbloqueada' : 'Missão concluída com excelência';
-    model.resultMessage = rare
-      ? 'Sequência rara: o núcleo central despertou brilho máximo e ativou um selo especial.'
-      : 'O módulo voltou a pulsar e a cidade recuperou sua capacidade de sonhar.';
     soundscape.play('result');
     soundscape.play('reward');
     vfx.successWave();
   } else if (mode === 'partial') {
-    model.resultTitle = 'Missão concluída com recuperação parcial';
-    model.resultMessage = 'Você estabilizou os núcleos principais. A equipe seguirá fortalecendo o sistema.';
     soundscape.play('repairComplete');
   } else {
-    model.resultTitle = 'Missão encerrada por tempo';
-    model.resultMessage = 'Mesmo com tempo curto, seu esforço gerou dados importantes para a próxima equipe.';
     soundscape.play('cancel');
   }
+
+  void narrationHooks.onResult(mode);
 
   ops.endRun({
     reason: 'result',
@@ -932,6 +1015,7 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
 function resetToAttract(message: string, reason: 'manual' | 'idle' | 'result'): void {
   clearScreenTimeout();
   stopMissionTimer();
+  narration.interrupt();
   if (model.sessionStarted) {
     ops.endRun({
       reason,
@@ -950,7 +1034,7 @@ function resetToAttract(message: string, reason: 'manual' | 'idle' | 'result'): 
   model.repair = {
     armedTool: null,
     slotProgress: createInitialSlotProgress(),
-    feedback: 'Selecione uma ferramenta e aplique em um núcleo.'
+    feedback: get<string>('screens.repair.initialFeedback')
   };
   model.comboStreak = 0;
   model.maxCombo = 0;
@@ -1005,7 +1089,7 @@ function updateHud(): void {
 
   const toolkitNames = model.toolkit.length
     ? model.toolkit.map((id) => TOOLS.find((tool) => tool.id === id)?.label ?? id).join(', ')
-    : 'Selecione 3';
+    : `${content.screens.toolkit.selectedHint} 3`;
 
   const slotCount = getCompletedSlotsCount();
 
@@ -1051,6 +1135,39 @@ function stepLabel(screen: ScreenId): string {
   }
 }
 
+function refreshUiCopyForScreen(screen: ScreenId): void {
+  if (screen === 'ATTRACT') {
+    uiCopy.attractTitle = pickVariantByPath('screens.attract.title', 'ATTRACT.title').text;
+    uiCopy.attractSubtitle = pickVariantByPath('screens.attract.subtitle', 'ATTRACT.subtitle').text;
+    uiCopy.attractCtaStart = pickVariantByPath('screens.attract.ctaStart', 'ATTRACT.cta').text;
+  }
+
+  if (screen === 'INTRO') {
+    uiCopy.introTitle = pickVariantByPath('screens.intro.title', 'INTRO.title').text;
+    uiCopy.introLine1 = pickVariantByPath('screens.intro.line1', 'INTRO.line1').text;
+    uiCopy.introLine2 = pickVariantByPath('screens.intro.line2', 'INTRO.line2').text;
+  }
+}
+
+function pickVariantByPath(path: string, key: string): VariantSelection {
+  const selection = getVariant(path, copyRng);
+  if (isRareTier(selection.tier)) {
+    ops.onCopyVariantPicked(key, selection.tier);
+  }
+  return selection;
+}
+
+function isRareTier(tier: VariantSelection['tier']): boolean {
+  return tier === 'rare' || tier === 'legendary';
+}
+
+function updateNarrationUi(): void {
+  const settings = narration.getSettings();
+  refs.narrationMode.textContent = narrationModeLabel(settings.mode);
+  refs.narrationMute.textContent = `Narração: ${settings.muted ? 'MUTE' : 'ON'}`;
+  refs.narrationMute.classList.toggle('warning', settings.muted);
+}
+
 function startMissionTimer(): void {
   stopMissionTimer();
 
@@ -1089,7 +1206,20 @@ function clearScreenTimeout(): void {
 }
 
 function syncSpectator(): void {
-  spectatorBus.sync(getPublicState());
+  const publicState = getPublicState();
+  spectatorBus.sync(publicState);
+
+  if (machine.current !== 'REPAIR') {
+    lastSpectatorProgressBucket = -1;
+    return;
+  }
+
+  const progress01 = publicState.repair.completed / Math.max(1, publicState.repair.total);
+  const bucket = Math.max(0, Math.min(4, Math.floor(progress01 * 4)));
+  if (bucket !== lastSpectatorProgressBucket) {
+    lastSpectatorProgressBucket = bucket;
+    void narrationHooks.onSpectatorProgress(progress01);
+  }
 }
 
 function getPublicState(): SpectatorPublicState {
@@ -1256,6 +1386,14 @@ function createPassiveFocusNavigator(rootEl: HTMLElement): FocusNavigator {
     },
     focusPrimaryAction: () => undefined,
     dispose: () => undefined
+  };
+}
+
+function createContentRng(): RngFn {
+  let seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
+  return () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
   };
 }
 

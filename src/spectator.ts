@@ -1,27 +1,31 @@
 import './spectator.css';
 import { SpectatorBus } from './core/bus';
 import { ACCESSORIES, EYE_COLORS, HAIR_COLORS, OUTFIT_COLORS, SKIN_COLORS, type SpectatorPublicState } from './core/types';
+import { getContentDataset } from './content/copy';
+import { createSpectatorCaptionsOverlay } from './ui/spectatorCaptions';
 
 const root = document.querySelector<HTMLDivElement>('#spectator-app');
 if (!root) {
   throw new Error('Elemento #spectator-app não encontrado.');
 }
+const content = getContentDataset();
 
 root.innerHTML = `
   <div class="spectator-shell">
     <header>
-      <h1>Tela do Público</h1>
+      <h1>${content.spectator.title}</h1>
       <p id="screenLabel">Aguardando sessão...</p>
+      <p id="progressLine"></p>
     </header>
     <main>
       <section class="avatar-panel" id="avatarPanel"></section>
       <section class="progress-panel">
         <div class="metric">
-          <small>Energia restante</small>
+          <small>${content.spectator.energyLabel}</small>
           <strong id="energy">100%</strong>
         </div>
         <div class="metric">
-          <small>Progresso do módulo</small>
+          <small>${content.spectator.moduleLabel}</small>
           <strong id="repair">0/4</strong>
         </div>
         <div class="module-track"><i id="moduleFill"></i></div>
@@ -34,23 +38,42 @@ root.innerHTML = `
 const refs = {
   shell: root.querySelector<HTMLDivElement>('.spectator-shell'),
   screenLabel: mustGetById('screenLabel'),
+  progressLine: mustGetById('progressLine'),
   avatarPanel: mustGetById('avatarPanel'),
   energy: mustGetById('energy'),
   repair: mustGetById('repair'),
   moduleFill: mustGetById('moduleFill'),
   slotRows: mustGetById('slotRows')
 };
+const captionOverlay = createSpectatorCaptionsOverlay(refs.shell ?? root);
 
 const dispose = SpectatorBus.onMessage((message) => {
-  if (message.type === 'RESET') {
-    renderIdle();
-    return;
+  switch (message.type) {
+    case 'RESET':
+      captionOverlay.clear();
+      renderIdle();
+      return;
+    case 'CAPTION':
+      captionOverlay.show(message.payload.text);
+      if (message.payload.durationMs && message.payload.durationMs > 0) {
+        window.setTimeout(() => {
+          captionOverlay.clear();
+        }, message.payload.durationMs);
+      }
+      return;
+    case 'CAPTION_CLEAR':
+      captionOverlay.clear();
+      return;
+    case 'SYNC':
+      render(message.payload);
+      return;
+    default:
+      return;
   }
-
-  render(message.payload);
 });
 
 window.addEventListener('beforeunload', () => {
+  captionOverlay.destroy();
   dispose();
 });
 
@@ -59,7 +82,8 @@ renderIdle();
 function renderIdle(): void {
   refs.shell?.classList.remove('state-distopia', 'state-lab', 'state-reborn');
   refs.shell?.classList.add('state-distopia');
-  refs.screenLabel.textContent = 'Aguardando jogador...';
+  refs.screenLabel.textContent = content.spectator.waiting;
+  refs.progressLine.textContent = content.spectator.progressByThreshold[0]?.line ?? '';
   refs.energy.textContent = '100%';
   refs.repair.textContent = '0/4';
   refs.moduleFill.style.width = '0%';
@@ -76,7 +100,8 @@ function render(state: SpectatorPublicState): void {
   refs.shell?.classList.remove('state-distopia', 'state-lab', 'state-reborn');
   refs.shell?.classList.add(themeClassByScreen(state.screen));
 
-  refs.screenLabel.textContent = labelByScreen(state.screen);
+  refs.screenLabel.textContent = content.spectator.screenLabel[state.screen] ?? labelByScreen(state.screen);
+  refs.progressLine.textContent = progressNarrative(state.repair.completed / Math.max(1, state.repair.total));
   refs.avatarPanel.innerHTML = renderAvatar(state);
   refs.slotRows.innerHTML = Object.entries(state.repair.slotProgress)
     .map(([slot, progress]) => {
@@ -103,8 +128,19 @@ function renderAvatar(state: SpectatorPublicState): string {
       <rect x="94" y="144" width="92" height="98" rx="20" fill="${outfit}" stroke="rgba(0,0,0,.35)" stroke-width="4"/>
       <text x="140" y="262" text-anchor="middle" fill="rgba(234,246,255,.92)" font-size="11">${ACCESSORIES[state.avatar.accessory]}</text>
     </svg>
-    <p class="toolkit-line"><strong>Mala ativa:</strong> ${tools}</p>
+    <p class="toolkit-line"><strong>${content.spectator.activeBagLabel}:</strong> ${tools}</p>
   `;
+}
+
+function progressNarrative(progress01: number): string {
+  const sorted = [...content.spectator.progressByThreshold].sort((a, b) => a.threshold - b.threshold);
+  let line = sorted[0]?.line ?? '';
+  for (const item of sorted) {
+    if (progress01 >= item.threshold) {
+      line = item.line;
+    }
+  }
+  return line;
 }
 
 function labelByScreen(screen: SpectatorPublicState['screen']): string {

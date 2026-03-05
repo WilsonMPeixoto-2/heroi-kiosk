@@ -103,6 +103,9 @@ function normalizeSession(input: unknown): SessionMetrics | null {
   base.popupBlockedCount = toSafeNumber(obj.popupBlockedCount);
   base.fullscreenFailCount = toSafeNumber(obj.fullscreenFailCount);
   base.wakeLockFailCount = toSafeNumber(obj.wakeLockFailCount);
+  base.copyVariantCounts.common = toSafeNumber(obj.copyVariantCounts?.common);
+  base.copyVariantCounts.rare = toSafeNumber(obj.copyVariantCounts?.rare);
+  base.copyVariantCounts.legendary = toSafeNumber(obj.copyVariantCounts?.legendary);
 
   AVATAR_CATEGORIES.forEach((category) => {
     const src = obj.avatarChoices?.[category];

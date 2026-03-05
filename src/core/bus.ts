@@ -4,7 +4,9 @@ const CHANNEL_NAME = 'jogo-heroi';
 
 type BusMessage =
   | { type: 'SYNC'; payload: SpectatorPublicState }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'CAPTION'; payload: { text: string; durationMs?: number } }
+  | { type: 'CAPTION_CLEAR' };
 
 export class SpectatorBus {
   private channel: BroadcastChannel | null = null;
@@ -21,6 +23,17 @@ export class SpectatorBus {
 
   reset(): void {
     this.channel?.postMessage({ type: 'RESET' } satisfies BusMessage);
+  }
+
+  caption(text: string, durationMs?: number): void {
+    this.channel?.postMessage({
+      type: 'CAPTION',
+      payload: { text, durationMs }
+    } satisfies BusMessage);
+  }
+
+  clearCaption(): void {
+    this.channel?.postMessage({ type: 'CAPTION_CLEAR' } satisfies BusMessage);
   }
 
   static onMessage(handler: (message: BusMessage) => void): () => void {

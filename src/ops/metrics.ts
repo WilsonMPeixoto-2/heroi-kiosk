@@ -42,6 +42,7 @@ export interface SessionMetrics {
   popupBlockedCount: number;
   fullscreenFailCount: number;
   wakeLockFailCount: number;
+  copyVariantCounts: Record<'common' | 'rare' | 'legendary', number>;
   avatarChoices: Record<AvatarCategory, Record<string, number>>;
   toolkitChoices: Record<string, number>;
   repairStats: RepairStats;
@@ -59,6 +60,8 @@ export interface OpsDashboardSnapshot {
     popupBlockedCount: number;
     fullscreenFailCount: number;
     wakeLockFailCount: number;
+    rareVariants: number;
+    legendaryVariants: number;
   };
 }
 
@@ -97,6 +100,11 @@ export function createEmptySessionMetrics(startedAt = new Date()): SessionMetric
     popupBlockedCount: 0,
     fullscreenFailCount: 0,
     wakeLockFailCount: 0,
+    copyVariantCounts: {
+      common: 0,
+      rare: 0,
+      legendary: 0
+    },
     avatarChoices: createAvatarChoiceMap(),
     toolkitChoices: {},
     repairStats: {

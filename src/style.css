@@ -793,6 +793,35 @@ body.admin-enabled .admin-only {
   border-color: var(--danger);
 }
 
+.captions-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 860px);
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--line));
+  border-radius: 12px;
+  background: rgba(5, 16, 30, 0.88);
+  color: #f3f9ff;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  padding: 10px 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  z-index: 12;
+  pointer-events: none;
+}
+
+.captions-player {
+  bottom: 18px;
+  font-size: clamp(0.92rem, 1.5vw, 1.22rem);
+}
+
+.captions-overlay.is-highlight {
+  border-color: color-mix(in srgb, var(--secondary) 78%, white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--secondary) 35%, transparent), 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
 @media (max-width: 980px) {
   .main-grid {
     grid-template-columns: 1fr;
@@ -813,6 +842,11 @@ body.admin-enabled .admin-only {
 
   .screen {
     min-height: 68vh;
+  }
+
+  .captions-player {
+    bottom: 12px;
+    width: min(95%, 700px);
   }
 }
 

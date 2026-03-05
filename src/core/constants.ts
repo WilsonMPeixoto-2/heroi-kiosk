@@ -56,7 +56,7 @@ function readBooleanFlagWithFallback(envKey: string, queryKey: string, fallback:
     return queryValue;
   }
 
-  return parseBoolean(import.meta.env[envKey], fallback);
+  return parseBoolean(import.meta.env[envKey], fallback) ?? fallback;
 }
 
 function readQueryNumber(key: string): number | null {
