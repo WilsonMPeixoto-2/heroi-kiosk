@@ -425,6 +425,7 @@ body.admin-enabled .admin-only {
   height: calc(100% - 36px);
   position: relative;
   z-index: 2;
+  view-transition-name: stage-root;
 }
 
 .vfx-host {
@@ -561,6 +562,44 @@ body.admin-enabled .admin-only {
 
 .avatar-svg {
   width: min(92%, 250px);
+  overflow: visible;
+}
+
+.avatar-svg .avatar-bob {
+  transform-origin: 50% 50%;
+  animation: avatar-bob 2.8s ease-in-out infinite;
+}
+
+.avatar-svg .avatar-eye-group {
+  transform-origin: 50% 50%;
+  animation: avatar-blink 4.4s infinite;
+}
+
+.avatar-svg text {
+  letter-spacing: 0.03em;
+}
+
+@keyframes avatar-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes avatar-blink {
+  0%,
+  46%,
+  52%,
+  100% {
+    transform: scaleY(1);
+  }
+  48%,
+  50% {
+    transform: scaleY(0.18);
+  }
 }
 
 .avatar-controls {
@@ -787,10 +826,12 @@ body.admin-enabled .admin-only {
   padding: 9px 11px;
   background: rgba(6, 20, 34, 0.9);
   font-size: 0.8rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
 }
 
 .toast-warn {
   border-color: var(--danger);
+  background: rgba(45, 13, 18, 0.9);
 }
 
 .stage {
@@ -968,4 +1009,21 @@ body.admin-enabled .admin-only {
   .btn {
     width: 100%;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-bg,
+  .avatar-svg .avatar-bob,
+  .avatar-svg .avatar-eye-group,
+  .btn,
+  .timer.danger {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+::view-transition-old(stage-root),
+::view-transition-new(stage-root) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0.75, 0.2, 1);
 }

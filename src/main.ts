@@ -172,6 +172,15 @@ const uiCopy = {
   introLine2: ''
 };
 const copyRng: RngFn = createContentRng();
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let reduceMotion = reducedMotionQuery.matches;
+document.body.classList.toggle('reduce-motion', reduceMotion);
+
+const onReducedMotionChanged = (event: MediaQueryListEvent): void => {
+  reduceMotion = event.matches;
+  document.body.classList.toggle('reduce-motion', reduceMotion);
+};
+reducedMotionQuery.addEventListener('change', onReducedMotionChanged);
 
 const hardening = KIOSK_RUNTIME_FLAGS.hardening
   ? initHardening({ rootEl: appRoot })
@@ -282,16 +291,12 @@ machine.onChange((next) => {
   model.screen = next;
   ops.onScreenEnter(next);
   onScreenEntered(next);
-  renderCurrentScreen();
-  updateHud();
-  syncSpectator();
+  renderCurrentScreenWithNativeTransition(next);
 });
 
 ops.onScreenEnter(machine.current);
 onScreenEntered(machine.current);
 renderCurrentScreen();
-updateHud();
-syncSpectator();
 
 requestAnimationFrame(loop);
 registerSW({ immediate: true });
@@ -314,6 +319,7 @@ window.addEventListener('beforeunload', () => {
   focusNavigator.dispose();
   visibility.dispose();
   hardening.dispose();
+  reducedMotionQuery.removeEventListener('change', onReducedMotionChanged);
   narration.destroy();
   soundscape.stopAmbient();
   vfx.destroy();
@@ -527,7 +533,31 @@ function renderCurrentScreen(): void {
   bindScreenActions();
   focusNavigator.refresh();
   focusNavigator.focusPrimaryAction();
-  animateScreenTransition();
+  animateScreenTransition(machine.current);
+  updateHud();
+  syncSpectator();
+}
+
+function renderCurrentScreenWithNativeTransition(screen: ScreenId): void {
+  if (reduceMotion) {
+    renderCurrentScreen();
+    return;
+  }
+
+  const transitionDoc = document as Document & {
+    startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+  };
+  if (typeof transitionDoc.startViewTransition !== 'function') {
+    renderCurrentScreen();
+    return;
+  }
+
+  transitionDoc.startViewTransition(() => {
+    renderCurrentScreen();
+  }).finished.catch(() => {
+    // Falha de transição nativa não pode interromper o fluxo do kiosk.
+    animateScreenTransition(screen);
+  });
 }
 
 function renderScreenHtml(): string {
@@ -811,9 +841,12 @@ function handleClickAction(action: string, node: HTMLElement): void {
       if (kind === 'outfit') model.avatar.outfit = value;
       if (kind === 'skin' || kind === 'hair' || kind === 'eyes' || kind === 'outfit') {
         ops.onAvatarChoice(kind, value);
+        updateAvatarSelectionInPlace(kind, value, node);
       }
       soundscape.play('click');
-      renderCurrentScreen();
+      updateAvatarPreviewInPlace();
+      updateHud();
+      syncSpectator();
       break;
     }
     case 'avatar-accessory': {
@@ -822,7 +855,10 @@ function handleClickAction(action: string, node: HTMLElement): void {
       model.avatar.accessory = value;
       ops.onAvatarChoice('accessory', value);
       soundscape.play('click');
-      renderCurrentScreen();
+      updateAvatarPreviewInPlace();
+      updateAvatarSelectionInPlace('accessory', value, node);
+      updateHud();
+      syncSpectator();
       break;
     }
     case 'back-intro':
@@ -925,6 +961,7 @@ function applyArmedToolToSlot(slotId: string): void {
       setFeedbackFromCue(cue.text);
     });
     soundscape.play('cancel');
+    triggerHaptics([40]);
     ops.onRepairHit(slotId, armedTool ?? 'none', false);
     return;
   }
@@ -935,6 +972,7 @@ function applyArmedToolToSlot(slotId: string): void {
     void narrationHooks.onRepairAlreadyStable(slotName).then((cue) => {
       setFeedbackFromCue(cue.text);
     });
+    triggerHaptics([14]);
     return;
   }
 
@@ -950,15 +988,18 @@ function applyArmedToolToSlot(slotId: string): void {
       void narrationHooks.onSlotComplete(slot.id).then((cue) => {
         setFeedbackFromCue(cue.text);
       });
+      triggerHaptics([20, 18, 35]);
     } else {
       void narrationHooks.onRepairHit(true).then((cue) => {
         setFeedbackFromCue(cue.text);
       });
+      triggerHaptics([16]);
     }
 
     if (model.comboStreak >= 3) {
       soundscape.play('reward');
       vfx.successWave();
+      triggerHaptics([28, 20, 28]);
       void narrationHooks.onCombo(model.comboStreak).then((cue) => {
         setFeedbackFromCue(cue.text, true);
       });
@@ -975,6 +1016,7 @@ function applyArmedToolToSlot(slotId: string): void {
       setFeedbackFromCue(cue.text);
     });
     soundscape.play('cancel');
+    triggerHaptics([45]);
     vfx.burst(0.24 + (slotIndex % 2) * 0.52, 0.45 + Math.floor(slotIndex / 2) * 0.2, 0xfb6542);
   }
 
@@ -1015,10 +1057,13 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
     soundscape.play('result');
     soundscape.play('reward');
     vfx.successWave();
+    triggerHaptics([35, 22, 70]);
   } else if (mode === 'partial') {
     soundscape.play('repairComplete');
+    triggerHaptics([22, 20, 30]);
   } else {
     soundscape.play('cancel');
+    triggerHaptics([55]);
   }
 
   skipNextResultScreenNarration = true;
@@ -1267,14 +1312,48 @@ function renderAvatarSvg(): string {
   const outfit = OUTFIT_COLORS[model.avatar.outfit] ?? OUTFIT_COLORS[0];
 
   return `
-    <svg viewBox="0 0 180 220" class="avatar-svg" role="img" aria-label="Avatar">
-      <circle cx="90" cy="110" r="78" fill="rgba(45,226,230,.15)" />
-      <rect x="56" y="45" width="68" height="70" rx="20" fill="${skin}" stroke="rgba(0,0,0,.35)" stroke-width="3"/>
-      <path d="M52 50 Q90 20 128 50 L128 70 L52 70 Z" fill="${hair}" stroke="rgba(0,0,0,.35)" stroke-width="3"/>
-      <circle cx="74" cy="78" r="7" fill="${eyes}" />
-      <circle cx="106" cy="78" r="7" fill="${eyes}" />
-      <rect x="50" y="110" width="80" height="86" rx="18" fill="${outfit}" stroke="rgba(0,0,0,.35)" stroke-width="3"/>
-      <text x="90" y="208" text-anchor="middle" fill="rgba(234,246,255,.8)" font-size="10">${ACCESSORIES[model.avatar.accessory]}</text>
+    <svg viewBox="0 0 220 260" class="avatar-svg" role="img" aria-label="Avatar personalizável">
+      <defs>
+        <linearGradient id="avatarSuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${outfit}" />
+          <stop offset="100%" stop-color="#0b1f35" />
+        </linearGradient>
+      </defs>
+      <g class="avatar-bob">
+        <ellipse cx="110" cy="238" rx="54" ry="12" fill="rgba(0,0,0,.28)" />
+        <circle cx="110" cy="124" r="90" fill="rgba(45,226,230,.12)" />
+        <g class="avatar-legs">
+          <rect x="86" y="186" width="18" height="42" rx="7" fill="url(#avatarSuitGrad)" />
+          <rect x="116" y="186" width="18" height="42" rx="7" fill="url(#avatarSuitGrad)" />
+          <rect x="82" y="225" width="26" height="10" rx="5" fill="#141d2c" />
+          <rect x="112" y="225" width="26" height="10" rx="5" fill="#141d2c" />
+        </g>
+        <g class="avatar-arms">
+          <rect x="55" y="132" width="22" height="56" rx="10" fill="url(#avatarSuitGrad)" transform="rotate(8 55 132)" />
+          <rect x="143" y="132" width="22" height="56" rx="10" fill="url(#avatarSuitGrad)" transform="rotate(-8 143 132)" />
+          <circle cx="68" cy="188" r="9" fill="${skin}" />
+          <circle cx="152" cy="188" r="9" fill="${skin}" />
+        </g>
+        <g class="avatar-body">
+          <rect x="74" y="104" width="72" height="90" rx="22" fill="url(#avatarSuitGrad)" stroke="rgba(0,0,0,.34)" stroke-width="2" />
+          <path d="M87 120 L110 142 L133 120" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="3.2" stroke-linecap="round" />
+          <circle cx="110" cy="144" r="10" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.35)" />
+        </g>
+        <g class="avatar-head">
+          <rect x="72" y="42" width="76" height="76" rx="26" fill="${skin}" stroke="rgba(0,0,0,.38)" stroke-width="2.4"/>
+          <path d="M66 56 Q110 18 154 56 L154 78 L66 78 Z" fill="${hair}" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
+          <g class="avatar-eye-group">
+            <ellipse cx="91" cy="84" rx="11" ry="8.2" fill="white" />
+            <ellipse cx="129" cy="84" rx="11" ry="8.2" fill="white" />
+            <circle cx="91" cy="84" r="4.6" fill="${eyes}" />
+            <circle cx="129" cy="84" r="4.6" fill="${eyes}" />
+          </g>
+          <path d="M92 103 Q110 116 128 103" fill="none" stroke="rgba(36,24,24,.62)" stroke-width="3" stroke-linecap="round" />
+          <circle cx="82" cy="96" r="4" fill="rgba(255,130,130,.3)" />
+          <circle cx="138" cy="96" r="4" fill="rgba(255,130,130,.3)" />
+        </g>
+      </g>
+      <text x="110" y="254" text-anchor="middle" fill="rgba(234,246,255,.92)" font-size="11.5" font-weight="700">${ACCESSORIES[model.avatar.accessory]}</text>
     </svg>
   `;
 }
@@ -1288,18 +1367,88 @@ function renderToolIcon(toolId: string, fallback: string): string {
   `;
 }
 
-function animateScreenTransition(): void {
+function animateScreenTransition(screen: ScreenId): void {
   const content = refs.screenRoot.querySelector<HTMLElement>('.content');
   if (!content) {
     return;
   }
 
   gsap.killTweensOf(content);
-  gsap.fromTo(
-    content,
-    { autoAlpha: 0, y: 18, filter: 'blur(8px)' },
-    { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.38, ease: 'power2.out' }
-  );
+  if (reduceMotion) {
+    gsap.fromTo(content, { autoAlpha: 0.96 }, { autoAlpha: 1, duration: 0.14, ease: 'none' });
+    return;
+  }
+
+  const profiles: Record<ScreenId, gsap.TweenVars> = {
+    ATTRACT: { autoAlpha: 0, scale: 0.985, filter: 'blur(10px)' },
+    INTRO: { autoAlpha: 0, x: 26, filter: 'blur(8px)' },
+    AVATAR: { autoAlpha: 0, y: 18, scale: 0.99, filter: 'blur(8px)' },
+    TOOLKIT: { autoAlpha: 0, x: -22, filter: 'blur(6px)' },
+    REPAIR: { autoAlpha: 0, y: 24, rotationX: -5, transformOrigin: '50% 0%', filter: 'blur(9px)' },
+    RESULT: { autoAlpha: 0, scale: 0.96, filter: 'blur(12px)' }
+  };
+
+  gsap.fromTo(content, profiles[screen], {
+    autoAlpha: 1,
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotationX: 0,
+    filter: 'blur(0px)',
+    duration: 0.44,
+    ease: screen === 'RESULT' ? 'back.out(1.08)' : 'power2.out'
+  });
+}
+
+function updateAvatarPreviewInPlace(): void {
+  const preview = refs.screenRoot.querySelector<HTMLElement>('.avatar-preview');
+  if (!preview) {
+    return;
+  }
+  preview.innerHTML = renderAvatarSvg();
+}
+
+function updateAvatarSelectionInPlace(
+  kind: 'skin' | 'hair' | 'eyes' | 'outfit' | 'accessory',
+  value: number,
+  node: HTMLElement
+): void {
+  if (kind === 'accessory') {
+    refs.screenRoot.querySelectorAll<HTMLElement>('[data-action="avatar-accessory"]').forEach((button) => {
+      button.classList.toggle('is-selected', Number(button.dataset.value) === value);
+    });
+    return;
+  }
+
+  refs.screenRoot.querySelectorAll<HTMLElement>(`[data-action="avatar-set"][data-kind="${kind}"]`).forEach((button) => {
+    button.classList.toggle('is-selected', button === node);
+  });
+}
+
+function triggerHaptics(pattern: number | number[]): void {
+  if (reduceMotion) {
+    return;
+  }
+
+  if (typeof navigator.vibrate === 'function') {
+    navigator.vibrate(pattern);
+  }
+
+  const pads = typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : [];
+  for (const pad of pads) {
+    if (!pad) {
+      continue;
+    }
+    const haptics = (pad as Gamepad & { hapticActuators?: Array<{ pulse(strength: number, duration: number): Promise<boolean> }> })
+      .hapticActuators;
+    if (!haptics || haptics.length === 0) {
+      continue;
+    }
+
+    const sequence = Array.isArray(pattern) ? pattern : [pattern];
+    const total = sequence.reduce((sum, part) => sum + part, 0);
+    void haptics[0]?.pulse(0.75, Math.min(160, total));
+  }
 }
 
 function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): string {

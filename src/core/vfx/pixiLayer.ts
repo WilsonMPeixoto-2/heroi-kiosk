@@ -5,6 +5,8 @@ interface Particle {
   vx: number;
   vy: number;
   life: number;
+  spin: number;
+  scaleDecay: number;
 }
 
 export class PixiFxLayer {
@@ -26,7 +28,8 @@ export class PixiFxLayer {
         resizeTo: host,
         backgroundAlpha: 0,
         antialias: true,
-        autoDensity: true
+        autoDensity: true,
+        preference: 'webgpu'
       });
       app.canvas.classList.add('pixi-layer');
       host.appendChild(app.canvas);
@@ -47,20 +50,49 @@ export class PixiFxLayer {
     const x = this.host.clientWidth * xRatio;
     const y = this.host.clientHeight * yRatio;
 
-    for (let i = 0; i < 26; i += 1) {
+    for (let i = 0; i < 34; i += 1) {
       const shape = new Graphics();
-      shape.circle(0, 0, Math.random() * 3 + 1.4);
+      const size = Math.random() * 4 + 1.2;
+      const variant = i % 3;
+      if (variant === 0) {
+        shape.circle(0, 0, size);
+      } else if (variant === 1) {
+        shape.rect(-size, -size, size * 2, size * 2);
+      } else {
+        shape.poly([
+          -size,
+          0,
+          -size * 0.35,
+          -size * 0.35,
+          0,
+          -size,
+          size * 0.35,
+          -size * 0.35,
+          size,
+          0,
+          size * 0.35,
+          size * 0.35,
+          0,
+          size,
+          -size * 0.35,
+          size * 0.35
+        ]);
+      }
       shape.fill(color);
       shape.x = x;
       shape.y = y;
-      shape.alpha = 0.9;
+      shape.alpha = 0.86;
+      shape.scale.set(Math.random() * 0.7 + 0.65);
+      shape.rotation = Math.random() * Math.PI * 2;
       this.app.stage.addChild(shape);
 
       this.particles.push({
         shape,
-        vx: (Math.random() - 0.5) * 4.4,
-        vy: (Math.random() - 0.8) * 4.2,
-        life: Math.random() * 22 + 20
+        vx: (Math.random() - 0.5) * 5.4,
+        vy: (Math.random() - 0.86) * 4.8,
+        life: Math.random() * 24 + 24,
+        spin: (Math.random() - 0.5) * 0.11,
+        scaleDecay: Math.random() * 0.009 + 0.004
       });
     }
   }
@@ -80,8 +112,12 @@ export class PixiFxLayer {
       particle.life -= 1;
       particle.shape.x += particle.vx;
       particle.shape.y += particle.vy;
+      particle.shape.rotation += particle.spin;
+      const nextScale = Math.max(0.1, particle.shape.scale.x - particle.scaleDecay);
+      particle.shape.scale.set(nextScale);
       particle.vy += 0.04;
-      particle.shape.alpha = Math.max(0, particle.life / 35);
+      particle.vx *= 0.985;
+      particle.shape.alpha = Math.max(0, particle.life / 42);
 
       if (particle.life <= 0) {
         particle.shape.destroy();
