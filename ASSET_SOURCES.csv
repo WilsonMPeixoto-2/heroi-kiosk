@@ -12,3 +12,7 @@ public/assets/icons/tools/cooperacao.svg,custom in-house,proprietary-internal,20
 public/assets/icons/tools/criatividade.svg,custom in-house,proprietary-internal,2026-03-05,Tool icon set for premium UI
 public/assets/audio/ui-sprites.wav,custom generated procedural,proprietary-internal,2026-03-05,Generated via script for sprite SFX
 public/assets/audio/ambient-loop.wav,custom generated procedural,proprietary-internal,2026-03-05,Generated via script for loop ambience
+public/assets/audio/ui-sprites.webm,generated placeholder (pipeline target),proprietary-internal,2026-03-06,Primary target format for runtime (opus)
+public/assets/audio/ui-sprites.mp3,generated placeholder (pipeline target),proprietary-internal,2026-03-06,Fallback target format for runtime
+public/assets/audio/ambient-loop.webm,generated placeholder (pipeline target),proprietary-internal,2026-03-06,Primary target format for runtime (opus)
+public/assets/audio/ambient-loop.mp3,generated placeholder (pipeline target),proprietary-internal,2026-03-06,Fallback target format for runtime

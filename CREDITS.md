@@ -6,6 +6,7 @@
 
 ## Audio Assets
 - Files in `public/assets/audio` were procedurally generated in-house for this project.
+- Runtime pipeline targets `webm/opus` (primary) and `mp3` (fallback); current repository still includes `.wav` fallback for compatibility until conversion pipeline is finalized.
 
 ## Libraries
 - Vite

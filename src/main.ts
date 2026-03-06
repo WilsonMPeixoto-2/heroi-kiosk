@@ -24,7 +24,7 @@ import { bindFocusNavigation, type FocusNavigator } from './core/kiosk/focus';
 import { installVisibilityResilience } from './core/kiosk/visibility';
 import { registerSW } from 'virtual:pwa-register';
 import { gsap } from 'gsap';
-import { Soundscape } from './core/audio/soundscape';
+import { Soundscape } from './audio/AudioDirector';
 import { IDLE_RESET_MS, KIOSK_RUNTIME_FLAGS, SCREEN_TIMEOUTS_MS, TEST_MODE } from './core/constants';
 import { OpsRecorder } from './ops/recorder';
 import { OpsDebugPanel } from './ops/debugPanel';
