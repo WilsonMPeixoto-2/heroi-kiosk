@@ -30,3 +30,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\launch-edge-kiosk.ps1 -Url "h
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\preflight-kiosk.ps1 -Build
 ```
+
+## 6) Kit de evento (preflight + run + stop)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\evento\preflight-evento.ps1 -RepoPath . -Port 4173 -RunNpmCi -RunBuild -RunPreviewTest -RequireSecondDisplay
+powershell -ExecutionPolicy Bypass -File .\scripts\evento\run-evento.ps1 -RepoPath . -Port 4173 -OpenSpectator -Theme neon
+powershell -ExecutionPolicy Bypass -File .\scripts\evento\STOP-EVENTO.ps1
+```
