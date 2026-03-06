@@ -24,3 +24,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\launch-edge-kiosk.ps1 -OpenSp
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\launch-edge-kiosk.ps1 -Url "http://localhost:4173/?theme=clean&admin=1"
 ```
+
+## 5) Rodar preflight de seguranca (recomendado antes do evento)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\preflight-kiosk.ps1 -Build
+```
