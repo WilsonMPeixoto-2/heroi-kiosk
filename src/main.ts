@@ -446,17 +446,21 @@ function onScreenEntered(screen: ScreenId): void {
       stopMissionTimer();
       refs.timerBadge.classList.remove('danger');
       soundscape.fadeAmbientTo(0.18, 400);
+      vfx.setScene('ATTRACT');
       break;
     case 'INTRO':
       soundscape.fadeAmbientTo(0.24, 350);
+      vfx.setScene('INTRO');
       setScreenTimeout(SCREEN_TIMEOUTS_MS.INTRO, () => machine.transition('AVATAR'));
       break;
     case 'AVATAR':
       soundscape.fadeAmbientTo(0.26, 300);
+      vfx.setScene('AVATAR');
       setScreenTimeout(SCREEN_TIMEOUTS_MS.AVATAR, () => machine.transition('TOOLKIT'));
       break;
     case 'TOOLKIT':
       soundscape.fadeAmbientTo(0.28, 300);
+      vfx.setScene('TOOLKIT');
       setScreenTimeout(SCREEN_TIMEOUTS_MS.TOOLKIT, () => {
         autoCompleteToolkit();
         machine.transition('REPAIR');
@@ -471,6 +475,8 @@ function onScreenEntered(screen: ScreenId): void {
       model.comboStreak = 0;
       ops.setRepairProgress(0);
       soundscape.fadeAmbientTo(0.34, 260);
+      vfx.setScene('REPAIR');
+      vfx.setRestorationProgress(0);
 
       setScreenTimeout(SCREEN_TIMEOUTS_MS.REPAIR, () => {
         const completed = getCompletedSlotsCount();
@@ -496,6 +502,7 @@ function onScreenEntered(screen: ScreenId): void {
     }
     case 'RESULT':
       soundscape.fadeAmbientTo(0.2, 450);
+      vfx.setScene('RESULT');
       setScreenTimeout(SCREEN_TIMEOUTS_MS.RESULT, () => {
         resetToAttract('Auto-reset concluído.', 'result');
       });
@@ -745,7 +752,7 @@ function applyArmedToolToSlot(slotId: string): void {
 
     if (model.comboStreak >= 3) {
       soundscape.play('reward');
-      vfx.successWave();
+      vfx.onSlotComplete({ x: 0.5, y: 0.4 });
       triggerHaptics([28, 20, 28]);
       void narrationHooks.onCombo(model.comboStreak).then((cue) => {
         setFeedbackFromCue(cue.text, true);
@@ -753,8 +760,14 @@ function applyArmedToolToSlot(slotId: string): void {
     }
     if (now >= 2) {
       ops.onRepairSlotComplete(slot.id);
+      vfx.onSlotComplete({ x: 0.24 + (slotIndex % 2) * 0.52, y: 0.45 + Math.floor(slotIndex / 2) * 0.2 });
     }
-    vfx.burst(0.24 + (slotIndex % 2) * 0.52, 0.45 + Math.floor(slotIndex / 2) * 0.2, 0x45cf78);
+    vfx.onRepairHit({
+      x: 0.24 + (slotIndex % 2) * 0.52,
+      y: 0.45 + Math.floor(slotIndex / 2) * 0.2,
+      success: true,
+      intensity: now >= 2 ? 1 : 0.75
+    });
   } else {
     model.repair.slotProgress[slot.id] = Math.max(0, current - 1);
     ops.onRepairHit(slot.id, armedTool, false);
@@ -764,11 +777,18 @@ function applyArmedToolToSlot(slotId: string): void {
     });
     soundscape.play('cancel');
     triggerHaptics([45]);
-    vfx.burst(0.24 + (slotIndex % 2) * 0.52, 0.45 + Math.floor(slotIndex / 2) * 0.2, 0xfb6542);
+    vfx.onRepairHit({
+      x: 0.24 + (slotIndex % 2) * 0.52,
+      y: 0.45 + Math.floor(slotIndex / 2) * 0.2,
+      success: false,
+      intensity: 0.6
+    });
   }
 
   const completed = getCompletedSlotsCount();
-  ops.setRepairProgress(completed / DREAM_SLOTS.length);
+  const restorationProgress = completed / DREAM_SLOTS.length;
+  ops.setRepairProgress(restorationProgress);
+  vfx.setRestorationProgress(restorationProgress);
   if (completed >= 3) {
     finishMission('full');
   }
@@ -803,15 +823,17 @@ function finishMission(mode: 'full' | 'partial' | 'timeout'): void {
   if (mode === 'full') {
     soundscape.play('result');
     soundscape.play('reward');
-    vfx.successWave();
+    vfx.onResult({ type: 'full' });
     emitLottie('result');
     triggerHaptics([35, 22, 70]);
   } else if (mode === 'partial') {
     soundscape.play('repairComplete');
+    vfx.onResult({ type: 'partial' });
     emitLottie('result');
     triggerHaptics([22, 20, 30]);
   } else {
     soundscape.play('cancel');
+    vfx.onResult({ type: 'timeout' });
     triggerHaptics([55]);
   }
 
@@ -1195,16 +1217,22 @@ function pickResultBadge(mode: 'full' | 'partial' | 'timeout', rare: boolean): s
 
 type FxLayer = {
   mount: () => Promise<void>;
-  burst: (xRatio: number, yRatio: number, color?: number) => void;
-  successWave: () => void;
+  setScene: (screen: ScreenId) => void;
+  onRepairHit: (payload: { x: number; y: number; success: boolean; intensity: number }) => void;
+  onSlotComplete: (payload: { x: number; y: number }) => void;
+  onResult: (payload: { type: 'full' | 'partial' | 'timeout' }) => void;
+  setRestorationProgress: (p01: number) => void;
   destroy: () => void;
 };
 
 function createFxLayer(host: HTMLElement): FxLayer {
   let instance: {
     mount(hostElement: HTMLElement): Promise<void>;
-    burst(xRatio: number, yRatio: number, color?: number): void;
-    successWave(): void;
+    setScene(screen: ScreenId): void;
+    onRepairHit(payload: { x: number; y: number; success: boolean; intensity: number }): void;
+    onSlotComplete(payload: { x: number; y: number }): void;
+    onResult(payload: { type: 'full' | 'partial' | 'timeout' }): void;
+    setRestorationProgress(p01: number): void;
     destroy(): void;
   } | null = null;
   let loading: Promise<void> | null = null;
@@ -1214,10 +1242,23 @@ function createFxLayer(host: HTMLElement): FxLayer {
       return loading ?? Promise.resolve();
     }
 
-    loading = import('./core/vfx/pixiLayer')
+    loading = import('./vfx/VfxEngine')
       .then(async (module) => {
-        instance = new module.PixiFxLayer();
-        await instance.mount(host);
+        const engine = new module.VfxEngine();
+        const ok = await engine.init(host);
+        if (!ok) {
+          instance = null;
+          return;
+        }
+        instance = {
+          mount: async () => undefined,
+          setScene: (screen) => engine.setScene(screen),
+          onRepairHit: (payload) => engine.onRepairHit(payload),
+          onSlotComplete: (payload) => engine.onSlotComplete(payload),
+          onResult: (payload) => engine.onResult(payload),
+          setRestorationProgress: (p01) => engine.setRestorationProgress(p01),
+          destroy: () => engine.destroy()
+        };
       })
       .catch(() => {
         instance = null;
@@ -1233,14 +1274,29 @@ function createFxLayer(host: HTMLElement): FxLayer {
     mount: async () => {
       await ensure();
     },
-    burst: (xRatio, yRatio, color) => {
+    setScene: (screen) => {
       void ensure().then(() => {
-        instance?.burst(xRatio, yRatio, color);
+        instance?.setScene(screen);
       });
     },
-    successWave: () => {
+    onRepairHit: (payload) => {
       void ensure().then(() => {
-        instance?.successWave();
+        instance?.onRepairHit(payload);
+      });
+    },
+    onSlotComplete: (payload) => {
+      void ensure().then(() => {
+        instance?.onSlotComplete(payload);
+      });
+    },
+    onResult: (payload) => {
+      void ensure().then(() => {
+        instance?.onResult(payload);
+      });
+    },
+    setRestorationProgress: (p01) => {
+      void ensure().then(() => {
+        instance?.setRestorationProgress(p01);
       });
     },
     destroy: () => {
