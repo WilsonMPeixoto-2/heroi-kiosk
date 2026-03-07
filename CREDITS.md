@@ -3,6 +3,9 @@
 ## Visual Assets
 - Backgrounds and icons in `public/assets` were created in-house for this project.
 - Tool icons in `public/assets/icons/tools` were designed as custom vector assets for the game UI.
+- Files in `public/game-assets` are sourced from the official Phaser Examples asset set:
+  - Repository: `https://github.com/phaserjs/examples`
+  - License: MIT (Phaser Examples project)
 
 ## Audio Assets
 - Files in `public/assets/audio` were procedurally generated in-house for this project.
