@@ -1,0 +1,251 @@
+:root,
+body[data-theme='scifi-neon'],
+body[data-theme='neon'] {
+  --ui-bg: rgba(8, 14, 28, 0.84);
+  --ui-bg-soft: rgba(12, 20, 38, 0.74);
+  --ui-line: rgba(0, 229, 255, 0.35);
+  --ui-text: #e9f7ff;
+  --ui-muted: #9fc1d2;
+  --ui-accent: #00e5ff;
+  --ui-accent-2: #ff2e88;
+  --ui-good: #64e8a2;
+  --ui-danger: #ff6e7d;
+  --ui-font: 'Rajdhani', 'Segoe UI', sans-serif;
+  --ui-title: 'Orbitron', 'Segoe UI', sans-serif;
+}
+
+body[data-theme='dark-fantasy'],
+body[data-theme='clean'] {
+  --ui-bg: rgba(16, 18, 26, 0.88);
+  --ui-bg-soft: rgba(20, 22, 32, 0.78);
+  --ui-line: rgba(201, 164, 106, 0.35);
+  --ui-text: #f3ede2;
+  --ui-muted: #b8ab98;
+  --ui-accent: #c7a46a;
+  --ui-accent-2: #d98c2b;
+  --ui-good: #7bc67b;
+  --ui-danger: #c45454;
+  --ui-font: 'Noto Sans', 'Segoe UI', sans-serif;
+  --ui-title: 'Cinzel', 'Times New Roman', serif;
+}
+
+body[data-theme='cartoon-brutal'],
+body[data-theme='comic'] {
+  --ui-bg: rgba(24, 39, 66, 0.88);
+  --ui-bg-soft: rgba(30, 52, 82, 0.8);
+  --ui-line: rgba(241, 250, 140, 0.4);
+  --ui-text: #fffef8;
+  --ui-muted: #d2e4ee;
+  --ui-accent: #e63946;
+  --ui-accent-2: #f1fa8c;
+  --ui-good: #74e08d;
+  --ui-danger: #ff9c59;
+  --ui-font: 'Nunito Sans', 'Segoe UI', sans-serif;
+  --ui-title: 'Bangers', 'Trebuchet MS', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--ui-font);
+  color: var(--ui-text);
+  background:
+    radial-gradient(circle at 14% 12%, color-mix(in srgb, var(--ui-accent) 24%, transparent), transparent 35%),
+    radial-gradient(circle at 86% 14%, color-mix(in srgb, var(--ui-accent-2) 18%, transparent), transparent 38%),
+    linear-gradient(160deg, #070c15, #111c2f);
+}
+
+#app {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+
+.game-shell {
+  width: min(1400px, 100%);
+  display: grid;
+  gap: 10px;
+}
+
+.hud-panel {
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+  background: var(--ui-bg);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+  padding: 10px 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.hud-header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.hud-header h1 {
+  margin: 0;
+  font-family: var(--ui-title);
+  letter-spacing: 0.04em;
+  font-size: clamp(1.2rem, 2.6vw, 2rem);
+}
+
+.hud-header p {
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: 0.9rem;
+}
+
+.hud-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.hud-card {
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--ui-bg-soft);
+}
+
+.hud-card small {
+  display: block;
+  color: var(--ui-muted);
+  font-size: 0.72rem;
+}
+
+.hud-card strong {
+  font-size: 1rem;
+}
+
+.meter {
+  margin-top: 4px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.meter i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ui-accent), var(--ui-accent-2));
+  transition: width 0.2s ease;
+}
+
+.stage-panel {
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #040912;
+  position: relative;
+}
+
+.stage-panel canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+}
+
+.stage-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 9, 18, 0.68);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.stage-overlay.is-visible {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.stage-overlay .box {
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--ui-bg);
+  width: min(520px, 90%);
+}
+
+.stage-overlay h2 {
+  margin: 0 0 6px;
+  font-family: var(--ui-title);
+}
+
+.stage-overlay p {
+  margin: 0 0 10px;
+  color: var(--ui-muted);
+}
+
+.stage-overlay button {
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  color: var(--ui-text);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ui-accent) 24%, #0b1c30), color-mix(in srgb, var(--ui-accent-2) 24%, #0e1f2f));
+  padding: 10px 14px;
+  font: 700 0.86rem var(--ui-font);
+  cursor: pointer;
+}
+
+.controls-panel {
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+  background: var(--ui-bg);
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls-panel p {
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: 0.86rem;
+}
+
+.touch-controls {
+  display: none;
+  gap: 6px;
+}
+
+.touch-controls button {
+  border: 1px solid var(--ui-line);
+  background: var(--ui-bg-soft);
+  color: var(--ui-text);
+  border-radius: 10px;
+  min-width: 58px;
+  min-height: 40px;
+  font: 700 0.78rem var(--ui-font);
+}
+
+@media (max-width: 980px) {
+  .hud-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .touch-controls {
+    display: inline-flex;
+    flex-wrap: wrap;
+  }
+}
