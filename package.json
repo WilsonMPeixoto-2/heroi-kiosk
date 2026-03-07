@@ -20,7 +20,7 @@
     "@playwright/test": "^1.58.2",
     "@preact/preset-vite": "^2.10.3",
     "@types/howler": "^2.2.12",
-    "eslint": "^10.0.2",
+    "eslint": "^10.0.3",
     "globals": "^17.4.0",
     "preact": "^10.28.4",
     "prettier": "^3.8.1",

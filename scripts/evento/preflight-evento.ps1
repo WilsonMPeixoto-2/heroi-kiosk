@@ -14,6 +14,16 @@ function Write-OK($t) { Write-Host "[OK]  $t" -ForegroundColor Green }
 function Write-WARN($t) { Write-Host "[WARN] $t" -ForegroundColor Yellow }
 function Write-FAIL($t) { Write-Host "[FAIL] $t" -ForegroundColor Red }
 
+function Resolve-NpmPath {
+  $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
+  if ($npmCmd) { return $npmCmd.Source }
+
+  $npm = Get-Command npm -ErrorAction SilentlyContinue
+  if ($npm) { return $npm.Source }
+
+  throw "npm nao encontrado no PATH."
+}
+
 function Get-SemVer($v) {
   $v = $v.Trim()
   if ($v.StartsWith("v")) { $v = $v.Substring(1) }
@@ -55,10 +65,17 @@ function Assert-Edge {
   Write-Section "Microsoft Edge"
   $edgeCandidates = @(
     "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-    "$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe"
+    "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
   )
   $edge = $null
   foreach ($p in $edgeCandidates) { if (Test-Path $p) { $edge = $p; break } }
+
+  if (-not $edge) {
+    try {
+      $cmd = Get-Command msedge.exe -ErrorAction Stop
+      $edge = $cmd.Source
+    } catch {}
+  }
 
   if (-not $edge) {
     try {
@@ -101,10 +118,11 @@ function Assert-RepoPath($path) {
   return $true
 }
 
-function Run-Npm($args, $cwd) {
+function Run-Npm($npmArgs, $cwd) {
+  $npmExe = Resolve-NpmPath
   $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-  $pinfo.FileName = "npm"
-  $pinfo.Arguments = $args
+  $pinfo.FileName = $npmExe
+  $pinfo.Arguments = $npmArgs
   $pinfo.WorkingDirectory = $cwd
   $pinfo.RedirectStandardOutput = $true
   $pinfo.RedirectStandardError = $true
@@ -122,7 +140,7 @@ function Assert-NpmCi($path) {
   Write-Section "npm ci"
   $r = Run-Npm "ci" $path
   if ($r.Code -ne 0) {
-    Write-FAIL "npm ci falhou.`n$r.Err"
+    Write-FAIL "npm ci falhou.`n$($r.Out)`n$($r.Err)"
     return $false
   }
   Write-OK "npm ci OK."
@@ -133,7 +151,7 @@ function Assert-Build($path) {
   Write-Section "Build"
   $r = Run-Npm "run build" $path
   if ($r.Code -ne 0) {
-    Write-FAIL "npm run build falhou.`n$r.Err"
+    Write-FAIL "npm run build falhou.`n$($r.Out)`n$($r.Err)"
     return $false
   }
   Write-OK "Build OK."
@@ -144,9 +162,10 @@ function Start-Preview($path) {
   $scripts = Get-Content (Join-Path $path "package.json") -Raw
   $scriptName = "preview"
   if ($scripts -match '"preview:host"\s*:') { $scriptName = "preview:host" }
+  $npmExe = Resolve-NpmPath
 
   $psi = New-Object System.Diagnostics.ProcessStartInfo
-  $psi.FileName = "npm"
+  $psi.FileName = $npmExe
   $psi.Arguments = "run $scriptName"
   $psi.WorkingDirectory = $path
   $psi.UseShellExecute = $false

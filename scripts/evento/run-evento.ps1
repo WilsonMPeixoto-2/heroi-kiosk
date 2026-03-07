@@ -7,11 +7,44 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Run-Npm($args, $cwd) {
-  Write-Host ">> npm $args" -ForegroundColor Cyan
-  $p = Start-Process -FilePath "npm" -ArgumentList $args -WorkingDirectory $cwd -PassThru -NoNewWindow
+function Resolve-NpmPath {
+  $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
+  if ($npmCmd) { return $npmCmd.Source }
+
+  $npm = Get-Command npm -ErrorAction SilentlyContinue
+  if ($npm) { return $npm.Source }
+
+  throw "npm nao encontrado no PATH."
+}
+
+function Resolve-EdgePath {
+  $candidates = @(
+    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+    "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+  )
+
+  foreach ($path in $candidates) {
+    if (Test-Path $path) {
+      return $path
+    }
+  }
+
+  $edgeCmd = Get-Command msedge.exe -ErrorAction SilentlyContinue
+  if ($edgeCmd) { return $edgeCmd.Source }
+
+  $edgeCmd = Get-Command msedge -ErrorAction SilentlyContinue
+  if ($edgeCmd) { return $edgeCmd.Source }
+
+  throw "Edge nao encontrado"
+}
+
+$npmExe = Resolve-NpmPath
+
+function Run-Npm($npmArgs, $cwd) {
+  Write-Host ">> npm $npmArgs" -ForegroundColor Cyan
+  $p = Start-Process -FilePath $npmExe -ArgumentList $npmArgs -WorkingDirectory $cwd -PassThru -NoNewWindow
   $p.WaitForExit()
-  if ($p.ExitCode -ne 0) { throw "npm $args falhou (ExitCode=$($p.ExitCode))" }
+  if ($p.ExitCode -ne 0) { throw "npm $npmArgs falhou (ExitCode=$($p.ExitCode))" }
 }
 
 Run-Npm "run build" $RepoPath
@@ -21,13 +54,11 @@ $scriptName = "preview"
 if ($pkg -match '"preview:host"\s*:') { $scriptName = "preview:host" }
 
 Write-Host ">> Iniciando preview ($scriptName)..." -ForegroundColor Cyan
-$preview = Start-Process -FilePath "npm" -ArgumentList "run $scriptName" -WorkingDirectory $RepoPath -PassThru -NoNewWindow
+$preview = Start-Process -FilePath $npmExe -ArgumentList "run $scriptName" -WorkingDirectory $RepoPath -PassThru -NoNewWindow
 
 Start-Sleep -Seconds 2
 
-$edge = "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
-if (-not (Test-Path $edge)) { $edge = "$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe" }
-if (-not (Test-Path $edge)) { throw "Edge nao encontrado" }
+$edge = Resolve-EdgePath
 
 $url = "http://localhost:$Port/?theme=$Theme"
 Write-Host ">> Abrindo Edge kiosk em $url" -ForegroundColor Cyan

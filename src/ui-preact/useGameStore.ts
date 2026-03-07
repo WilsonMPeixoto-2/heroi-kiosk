@@ -5,9 +5,13 @@ export function useGameStore(): GameStoreState {
   const [snapshot, setSnapshot] = useState<GameStoreState>(() => gameStore.getSnapshot());
 
   useEffect(() => {
-    return gameStore.subscribe(() => {
+    const sync = () => {
       setSnapshot(gameStore.getSnapshot());
-    });
+    };
+    const unsubscribe = gameStore.subscribe(sync);
+    // Capture updates that may happen between initial render and subscription setup.
+    sync();
+    return unsubscribe;
   }, []);
 
   return snapshot;

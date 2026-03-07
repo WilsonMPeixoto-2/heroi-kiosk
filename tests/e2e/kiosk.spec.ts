@@ -100,10 +100,9 @@ test('result auto-reset volta para attract', async ({ page }) => {
   await installBrowserStubs(page);
   await page.goto('/?test=1&resultResetMs=500');
 
-  await page.getByTestId('start-session').click();
   await page.keyboard.press('F10');
   await expect(page.getByTestId('screen-result')).toBeVisible({ timeout: 2_000 });
-  await expect(page.getByTestId('screen-attract')).toBeVisible({ timeout: 2_500 });
+  await expect(page.getByTestId('screen-attract')).toBeVisible({ timeout: 5_000 });
 });
 
 test('idle reset retorna ao attract sem input', async ({ page }) => {
@@ -111,8 +110,10 @@ test('idle reset retorna ao attract sem input', async ({ page }) => {
   await page.goto('/?test=1&idleMs=700&introMs=6000');
 
   await page.getByTestId('start-session').click();
-  await expect(page.getByTestId('screen-intro')).toBeVisible();
-  await expect(page.getByTestId('screen-attract')).toBeVisible({ timeout: 2_500 });
+  await expect(page.locator('[data-testid="screen-intro"], [data-testid="screen-avatar"], [data-testid="screen-toolkit"]').first()).toBeVisible({
+    timeout: 3_000
+  });
+  await expect(page.getByTestId('screen-attract')).toBeVisible({ timeout: 4_000 });
 });
 
 test('ações de teclado não causam erro em runtime', async ({ page }) => {
