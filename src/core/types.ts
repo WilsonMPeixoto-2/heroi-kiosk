@@ -21,10 +21,13 @@ export interface DreamSlot {
   acceptedTools: string[];
 }
 
+export type TimingGrade = 'none' | 'perfect' | 'good' | 'miss';
+
 export interface RepairState {
   armedTool: string | null;
   slotProgress: Record<string, number>;
   feedback: string;
+  timingGrade: TimingGrade;
 }
 
 export interface GameModel {
@@ -138,7 +141,8 @@ export function createInitialModel(): GameModel {
     repair: {
       armedTool: null,
       slotProgress: {},
-      feedback: 'Selecione uma ferramenta e aplique em um núcleo.'
+      feedback: 'Selecione uma ferramenta e aplique em um núcleo.',
+      timingGrade: 'none'
     },
     comboStreak: 0,
     maxCombo: 0,

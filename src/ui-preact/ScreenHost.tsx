@@ -184,12 +184,36 @@ function RepairScreen() {
   if (!uiView) return null;
   const selectedTools = uiView.model.toolkit.map((toolId) => TOOLS.find((tool) => tool.id === toolId)).filter(Boolean) as typeof TOOLS;
   const completed = DREAM_SLOTS.filter((slot) => (uiView.model.repair.slotProgress[slot.id] ?? 0) >= 2).length;
+  const avatar = uiView.model.avatar;
+  const avatarMood = uiView.model.comboStreak >= 3 ? 'smile' : uiView.model.repair.timingGrade === 'miss' ? 'neutral' : 'confident';
+  const timingLabel = timingGradeLabel(uiView.model.repair.timingGrade);
   return (
     <section class="screen screen-repair" data-testid="screen-repair">
       <div class="screen-bg bg-lab" />
       <div class="content">
         <h2>{content.screens.repair.title}</h2>
         <p>{content.screens.repair.subtitle}</p>
+        <p class={`hint timing-hint grade-${uiView.model.repair.timingGrade}`}>
+          Janela de energia: <strong>{timingLabel}</strong>
+        </p>
+        <div class="repair-hero-strip">
+          <div class="repair-avatar">
+            <AvatarView
+              skinTone={avatar.skin}
+              hairStyle={avatar.hair}
+              eyeStyle={avatar.eyes}
+              outfitStyle={avatar.outfit}
+              accessoryId={avatar.accessory}
+              mood={avatarMood}
+            />
+          </div>
+          <div class="repair-mission-copy">
+            <p class="hint">Acione os núcleos no pico da barra para carga crítica.</p>
+            <p class="hint">
+              Estado da missão: <strong>{completed}/4</strong> núcleos estabilizados
+            </p>
+          </div>
+        </div>
         <div class="repair-tools">
           {selectedTools.map((tool) => (
             <button class={`tool-chip ${uiView.model.repair.armedTool === tool.id ? 'is-armed' : ''}`} data-action="arm-tool" data-tool={tool.id} data-focusable="true">
@@ -201,15 +225,21 @@ function RepairScreen() {
           ))}
         </div>
         <div class="repair-grid">
-          {DREAM_SLOTS.map((slot) => {
+          {DREAM_SLOTS.map((slot, slotIndex) => {
             const progress = uiView.model.repair.slotProgress[slot.id] ?? 0;
             const done = progress >= 2;
             const status = done ? 'ONLINE' : `${progress}/2`;
             const slotLabel = content.screens.repair.slotNames[slot.id] ?? slot.label;
+            const timingMs = 1600 + slotIndex * 190;
+            const timingDelay = -(slotIndex * 170);
             return (
               <button class={`slot ${done ? 'is-done' : ''}`} data-action="apply-tool" data-slot={slot.id} data-focusable="true">
                 <strong>{slotLabel}</strong>
                 <small>{status}</small>
+                <div class="slot-meter" style={`--slot-timing-ms:${timingMs}ms; --slot-timing-delay:${timingDelay}ms;`}>
+                  <span class="meter-window" />
+                  <span class="meter-cursor" />
+                </div>
               </button>
             );
           })}
@@ -318,4 +348,17 @@ function stepLabel(screenId: string): string {
     default:
       return screenId;
   }
+}
+
+function timingGradeLabel(grade: 'none' | 'perfect' | 'good' | 'miss'): string {
+  if (grade === 'perfect') {
+    return 'Perfeito';
+  }
+  if (grade === 'good') {
+    return 'Bom';
+  }
+  if (grade === 'miss') {
+    return 'Fora do timing';
+  }
+  return 'Aguardando ação';
 }

@@ -739,6 +739,54 @@ body.admin-enabled .admin-only {
   margin-top: 10px;
 }
 
+.repair-hero-strip {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.repair-avatar {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 36, 58, 0.74);
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+}
+
+.repair-avatar .avatar-svg {
+  width: min(100%, 148px);
+}
+
+.repair-mission-copy {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  background: rgba(14, 42, 68, 0.68);
+}
+
+.timing-hint {
+  margin-top: 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.timing-hint.grade-perfect {
+  color: #ffe483;
+  text-shadow: 0 0 14px rgba(255, 220, 120, 0.46);
+}
+
+.timing-hint.grade-good {
+  color: #9cf2ff;
+}
+
+.timing-hint.grade-miss {
+  color: #ff9ea1;
+}
+
 .tool-chip {
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -772,6 +820,51 @@ body.admin-enabled .admin-only {
 
 .slot small {
   color: #c0ddf0;
+}
+
+.slot-meter {
+  position: relative;
+  margin-top: 7px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(5, 20, 34, 0.72);
+  border: 1px solid rgba(148, 198, 228, 0.28);
+  overflow: hidden;
+}
+
+.slot-meter .meter-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 44%;
+  width: 12%;
+  background: rgba(87, 244, 255, 0.32);
+  box-shadow: 0 0 10px rgba(87, 244, 255, 0.42);
+}
+
+.slot-meter .meter-cursor {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f7feff, #52e6ff);
+  box-shadow: 0 0 10px rgba(82, 230, 255, 0.66);
+  animation: slot-cursor-sweep var(--slot-timing-ms, 1700ms) linear infinite;
+  animation-delay: var(--slot-timing-delay, 0ms);
+}
+
+@keyframes slot-cursor-sweep {
+  0% {
+    left: 0%;
+  }
+  50% {
+    left: calc(100% - 10px);
+  }
+  100% {
+    left: 0%;
+  }
 }
 
 .summary-grid {
@@ -1023,6 +1116,14 @@ body.admin-enabled .admin-only {
 
   .avatar-layout {
     grid-template-columns: 1fr;
+  }
+
+  .repair-hero-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-avatar {
+    min-height: 122px;
   }
 
   #screenRoot {

@@ -11,7 +11,8 @@ import {
   TOOLS,
   type GameModel,
   type ScreenId,
-  type SpectatorPublicState
+  type SpectatorPublicState,
+  type TimingGrade
 } from './core/types';
 import { InputManager } from './core/input/inputManager';
 import { DiagnosticsOverlay } from './core/input/diagnosticsOverlay';
@@ -63,6 +64,10 @@ const refs = {
   narrationMute: mustGetById<HTMLButtonElement>('narrationMute'),
   spectatorRetry: mustGetById<HTMLButtonElement>('spectatorRetry')
 };
+const TIMING_WAVE_BASE_MS = 1650;
+const TIMING_WAVE_STEP_MS = 210;
+const TIMING_PERFECT_THRESHOLD = 0.93;
+const TIMING_GOOD_THRESHOLD = 0.75;
 
 const model: GameModel = createInitialModel();
 gameStore.patch({
@@ -420,7 +425,8 @@ async function beginSession(): Promise<void> {
     model.repair = {
       armedTool: null,
       slotProgress: createInitialSlotProgress(),
-      feedback: get<string>('screens.repair.initialFeedback')
+      feedback: get<string>('screens.repair.initialFeedback'),
+      timingGrade: 'none'
     };
     model.comboStreak = 0;
     model.maxCombo = 0;
@@ -470,7 +476,8 @@ function onScreenEntered(screen: ScreenId): void {
       model.repair = {
         armedTool: model.toolkit[0] ?? null,
         slotProgress: createInitialSlotProgress(),
-        feedback: get<string>('screens.repair.initialFeedback')
+        feedback: get<string>('screens.repair.initialFeedback'),
+        timingGrade: 'none'
       };
       model.comboStreak = 0;
       ops.setRepairProgress(0);
@@ -697,9 +704,24 @@ function autoCompleteToolkit(): void {
   }
 }
 
+function getSlotTimingGrade(slotIndex: number, nowMs = performance.now()): TimingGrade {
+  const cycleMs = TIMING_WAVE_BASE_MS + slotIndex * TIMING_WAVE_STEP_MS;
+  const cycle = ((nowMs + slotIndex * 311) % cycleMs) / cycleMs;
+  const wave = 0.5 + Math.sin(cycle * Math.PI * 2) * 0.5;
+
+  if (wave >= TIMING_PERFECT_THRESHOLD) {
+    return 'perfect';
+  }
+  if (wave >= TIMING_GOOD_THRESHOLD) {
+    return 'good';
+  }
+  return 'miss';
+}
+
 function applyArmedToolToSlot(slotId: string): void {
   const slot = DREAM_SLOTS.find((entry) => entry.id === slotId);
   const slotIndex = DREAM_SLOTS.findIndex((entry) => entry.id === slotId);
+  const timingGrade = getSlotTimingGrade(slotIndex >= 0 ? slotIndex : 0);
   const armedTool = model.repair.armedTool;
   const setFeedbackFromCue = (text: string, append = false): void => {
     model.repair.feedback = append ? `${model.repair.feedback} ${text}`.trim() : text;
@@ -710,6 +732,7 @@ function applyArmedToolToSlot(slotId: string): void {
   };
 
   if (!slot || !armedTool) {
+    model.repair.timingGrade = 'miss';
     void narrationHooks.onRepairNeedTool().then((cue) => {
       setFeedbackFromCue(cue.text);
     });
@@ -721,6 +744,7 @@ function applyArmedToolToSlot(slotId: string): void {
 
   const slotName = content.screens.repair.slotNames[slot.id] ?? slot.label;
   const current = model.repair.slotProgress[slot.id] ?? 0;
+  model.repair.timingGrade = timingGrade;
   if (current >= 2) {
     void narrationHooks.onRepairAlreadyStable(slotName).then((cue) => {
       setFeedbackFromCue(cue.text);
@@ -729,8 +753,9 @@ function applyArmedToolToSlot(slotId: string): void {
     return;
   }
 
-  if (slot.acceptedTools.includes(armedTool)) {
-    model.repair.slotProgress[slot.id] = Math.min(2, current + 1);
+  if (slot.acceptedTools.includes(armedTool) && timingGrade !== 'miss') {
+    const increment = timingGrade === 'perfect' ? 2 : 1;
+    model.repair.slotProgress[slot.id] = Math.min(2, current + increment);
     const now = model.repair.slotProgress[slot.id];
     ops.onRepairHit(slot.id, armedTool, true);
     model.comboStreak += 1;
@@ -750,6 +775,14 @@ function applyArmedToolToSlot(slotId: string): void {
       triggerHaptics([16]);
     }
 
+    if (timingGrade === 'perfect') {
+      soundscape.play('reward');
+      setFeedbackFromCue('Timing perfeito. Carga crítica aplicada.', true);
+      triggerHaptics([12, 8, 20]);
+    } else if (timingGrade === 'good') {
+      setFeedbackFromCue('Bom timing. Pulso estável.', true);
+    }
+
     if (model.comboStreak >= 3) {
       soundscape.play('reward');
       vfx.onSlotComplete({ x: 0.5, y: 0.4 });
@@ -766,7 +799,20 @@ function applyArmedToolToSlot(slotId: string): void {
       x: 0.24 + (slotIndex % 2) * 0.52,
       y: 0.45 + Math.floor(slotIndex / 2) * 0.2,
       success: true,
-      intensity: now >= 2 ? 1 : 0.75
+      intensity: timingGrade === 'perfect' ? 1 : now >= 2 ? 0.9 : 0.75
+    });
+  } else if (slot.acceptedTools.includes(armedTool) && timingGrade === 'miss') {
+    model.repair.slotProgress[slot.id] = Math.max(0, current - 1);
+    ops.onRepairHit(slot.id, armedTool, false);
+    model.comboStreak = 0;
+    setFeedbackFromCue('Sincronização fora da janela. Ajuste o pulso e tente de novo.');
+    soundscape.play('cancel');
+    triggerHaptics([45]);
+    vfx.onRepairHit({
+      x: 0.24 + (slotIndex % 2) * 0.52,
+      y: 0.45 + Math.floor(slotIndex / 2) * 0.2,
+      success: false,
+      intensity: 0.72
     });
   } else {
     model.repair.slotProgress[slot.id] = Math.max(0, current - 1);
@@ -874,7 +920,8 @@ function resetToAttract(message: string, reason: 'manual' | 'idle' | 'result'): 
   model.repair = {
     armedTool: null,
     slotProgress: createInitialSlotProgress(),
-    feedback: get<string>('screens.repair.initialFeedback')
+    feedback: get<string>('screens.repair.initialFeedback'),
+    timingGrade: 'none'
   };
   model.comboStreak = 0;
   model.maxCombo = 0;
