@@ -1,36 +1,53 @@
-:root {
-  --bg: #050f1d;
-  --bg-2: #0f2f4f;
-  --panel: rgba(8, 24, 43, 0.78);
-  --line: rgba(109, 194, 246, 0.28);
+:root,
+body[data-theme='scifi-neon'],
+body[data-theme='neon'] {
+  --bg: #05070d;
+  --bg-2: #111827;
+  --panel: rgba(14, 20, 32, 0.84);
+  --line: rgba(112, 137, 162, 0.34);
   --text: #ecf8ff;
-  --muted: #a2c8dd;
-  --primary: #2de2e6;
-  --secondary: #f5cb5c;
-  --danger: #ff6464;
+  --muted: #a6bdd2;
+  --primary: #00e5ff;
+  --secondary: #ff2e88;
+  --danger: #ff6d7a;
   --ok: #45cf78;
+  --font-body: 'Rajdhani', 'Bahnschrift', 'Segoe UI', sans-serif;
+  --font-title: 'Orbitron', 'BankGothic Md BT', 'Bahnschrift', sans-serif;
+  --font-ui: 'Rajdhani', 'Bahnschrift', 'Segoe UI', sans-serif;
 }
 
+body[data-theme='dark-fantasy'],
 body[data-theme='clean'] {
-  --bg: #14181f;
-  --bg-2: #2b323d;
-  --panel: rgba(20, 24, 31, 0.86);
-  --line: rgba(164, 188, 212, 0.3);
-  --text: #f2f6fa;
-  --muted: #b4c3d2;
-  --primary: #9bd2ff;
-  --secondary: #ffcc7a;
+  --bg: #0b0f1a;
+  --bg-2: #1a2331;
+  --panel: rgba(20, 24, 36, 0.88);
+  --line: rgba(139, 155, 176, 0.28);
+  --text: #f3f0ea;
+  --muted: #b8afa2;
+  --primary: #c7a46a;
+  --secondary: #d98c2b;
+  --danger: #9d3d3d;
+  --ok: #7bc67b;
+  --font-body: 'Noto Serif', 'Segoe UI', serif;
+  --font-title: 'Cinzel', 'Times New Roman', serif;
+  --font-ui: 'Noto Sans', 'Segoe UI', sans-serif;
 }
 
+body[data-theme='cartoon-brutal'],
 body[data-theme='comic'] {
-  --bg: #1c1120;
-  --bg-2: #4a2052;
-  --panel: rgba(35, 16, 42, 0.84);
-  --line: rgba(255, 189, 240, 0.34);
-  --text: #fff2ff;
-  --muted: #f3c8f3;
-  --primary: #ff66c4;
-  --secondary: #ffe96b;
+  --bg: #1d3557;
+  --bg-2: #457b9d;
+  --panel: rgba(36, 52, 71, 0.88);
+  --line: rgba(208, 237, 255, 0.4);
+  --text: #fffef6;
+  --muted: #d8e9f3;
+  --primary: #e63946;
+  --secondary: #f1fa8c;
+  --danger: #ff8b67;
+  --ok: #7de38d;
+  --font-body: 'Nunito Sans', 'Segoe UI', sans-serif;
+  --font-title: 'Bangers', 'Impact', sans-serif;
+  --font-ui: 'Nunito Sans', 'Segoe UI', sans-serif;
 }
 
 * {
@@ -44,7 +61,7 @@ body {
 }
 
 body {
-  font-family: 'Bahnschrift', 'Segoe UI', sans-serif;
+  font-family: var(--font-body, 'Bahnschrift', 'Segoe UI', sans-serif);
   color: var(--text);
   background:
     radial-gradient(circle at 15% 12%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 32%),
@@ -98,7 +115,7 @@ body::before {
   font-size: clamp(1.4rem, 3vw, 2.1rem);
   letter-spacing: 0.05em;
   color: var(--primary);
-  font-family: 'BankGothic Md BT', 'Bahnschrift', sans-serif;
+  font-family: var(--font-title, 'BankGothic Md BT', 'Bahnschrift', sans-serif);
 }
 
 .brand p {
@@ -173,7 +190,7 @@ body::before {
   background: color-mix(in srgb, var(--primary) 25%, #0b2c4a);
   color: var(--text);
   padding: 8px 10px;
-  font: 700 0.74rem 'Bahnschrift', sans-serif;
+  font: 700 0.74rem var(--font-ui, 'Bahnschrift', sans-serif);
   cursor: pointer;
 }
 
@@ -520,7 +537,7 @@ body.admin-enabled .admin-only {
   border: none;
   border-radius: 11px;
   padding: 10px 14px;
-  font: 800 0.84rem 'Bahnschrift', sans-serif;
+  font: 800 0.84rem var(--font-ui, 'Bahnschrift', sans-serif);
   cursor: pointer;
 }
 
@@ -689,7 +706,7 @@ body.admin-enabled .admin-only {
   background: rgba(12, 34, 56, 0.8);
   color: var(--text);
   padding: 7px 10px;
-  font: 700 0.73rem 'Bahnschrift', sans-serif;
+  font: 700 0.73rem var(--font-ui, 'Bahnschrift', sans-serif);
   cursor: pointer;
 }
 
@@ -793,7 +810,7 @@ body.admin-enabled .admin-only {
   background: rgba(13, 40, 66, 0.8);
   color: var(--text);
   padding: 7px 11px;
-  font: 700 0.74rem 'Bahnschrift', sans-serif;
+  font: 700 0.74rem var(--font-ui, 'Bahnschrift', sans-serif);
   cursor: pointer;
 }
 

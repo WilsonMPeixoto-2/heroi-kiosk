@@ -27,7 +27,7 @@ const listeners = new Set<Listener>();
 
 let state: GameStoreState = {
   screenId: 'ATTRACT',
-  themeId: 'neon',
+  themeId: 'scifi-neon',
   flags: {
     debug: false
   },

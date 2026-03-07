@@ -40,14 +40,23 @@ import type { VariantSelection } from './content/schema';
 import { App } from './ui-preact/App';
 import { gameStore } from './core/store/gameStore';
 
-const THEMES = new Set(['neon', 'clean', 'comic']);
+const THEMES = new Set(['scifi-neon', 'dark-fantasy', 'cartoon-brutal']);
+const THEME_ALIASES: Record<string, string> = {
+  'scifi-neon': 'scifi-neon',
+  neon: 'scifi-neon',
+  'dark-fantasy': 'dark-fantasy',
+  clean: 'dark-fantasy',
+  'cartoon-brutal': 'cartoon-brutal',
+  comic: 'cartoon-brutal'
+};
+const DEFAULT_THEME = (import.meta.env.VITE_DEFAULT_THEME ?? 'scifi-neon').toLowerCase();
 
 const appRoot = document.querySelector<HTMLDivElement>('#app');
 if (!appRoot) {
   throw new Error('Elemento #app não encontrado.');
 }
 
-applyThemeFromQuery();
+const activeTheme = applyThemeFromQuery();
 applyKioskModeClasses();
 const content = getContentDataset();
 renderPreact(h(App, {}), appRoot);
@@ -72,7 +81,7 @@ const TIMING_GOOD_THRESHOLD = 0.75;
 const model: GameModel = createInitialModel();
 gameStore.patch({
   screenId: model.screen,
-  themeId: document.body.dataset.theme ?? 'neon',
+  themeId: activeTheme,
   publicState: null
 });
 const machine = new StateMachine<ScreenId>('ATTRACT');
@@ -1353,10 +1362,24 @@ function createFxLayer(host: HTMLElement): FxLayer {
   };
 }
 
-function applyThemeFromQuery(): void {
+function applyThemeFromQuery(): string {
   const params = new URLSearchParams(window.location.search);
-  const theme = params.get('theme')?.toLowerCase();
-  document.body.dataset.theme = theme && THEMES.has(theme) ? theme : 'neon';
+  const queryTheme = normalizeTheme(params.get('theme'));
+  const fallbackTheme = normalizeTheme(DEFAULT_THEME) ?? 'scifi-neon';
+  const resolvedTheme = queryTheme ?? fallbackTheme;
+  document.body.dataset.theme = resolvedTheme;
+  return resolvedTheme;
+}
+
+function normalizeTheme(theme: string | null | undefined): string | null {
+  if (!theme) {
+    return null;
+  }
+  const normalized = THEME_ALIASES[theme.toLowerCase()];
+  if (!normalized) {
+    return null;
+  }
+  return THEMES.has(normalized) ? normalized : null;
 }
 
 function applyKioskModeClasses(): void {
