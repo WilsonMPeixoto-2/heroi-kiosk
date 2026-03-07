@@ -24,3 +24,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\evento\STOP-EVENTO.ps1
 
 ## Release gates
 - [docs/RELEASE-GATES.md](docs/RELEASE-GATES.md)
+
+## Direcao de produto (obrigatoria)
+- [docs/DIRETRIZ-MESTRA-PRODUTO.md](docs/DIRETRIZ-MESTRA-PRODUTO.md)
+- [docs/RESET-CONCEITUAL-HEROI-KIOSK.md](docs/RESET-CONCEITUAL-HEROI-KIOSK.md)
+- [docs/AUDITORIA-GAMEPLAY-REAL.md](docs/AUDITORIA-GAMEPLAY-REAL.md)
+- [docs/ANTI-APOSTILA-AUDITORIA.md](docs/ANTI-APOSTILA-AUDITORIA.md)
+- [docs/ESTUDO-DE-FORMATOS-HEROI-KIOSK.md](docs/ESTUDO-DE-FORMATOS-HEROI-KIOSK.md)
+- [docs/REDESENHO-REPAIR.md](docs/REDESENHO-REPAIR.md)
