@@ -109,12 +109,16 @@ appRoot.innerHTML = `
     </section>
 
     <section class="reboot-stage">
-      <div id="gameHost"></div>
-      <div id="overlay" class="overlay">
-        <div class="overlay-box">
-          <h2 id="overlayTitle">Fim de jogo</h2>
-          <p id="overlayBody"></p>
-          <button id="restartBtn" type="button">Jogar novamente</button>
+      <div id="stageFrame" class="stage-frame">
+        <div id="viewport16x9" class="viewport-16x9">
+          <div id="gameHost"></div>
+          <div id="overlay" class="overlay">
+            <div class="overlay-box">
+              <h2 id="overlayTitle">Fim de jogo</h2>
+              <p id="overlayBody"></p>
+              <button id="restartBtn" type="button">Jogar novamente</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -139,6 +143,8 @@ const ui = {
   overlayTitle: mustGetById('overlayTitle'),
   overlayBody: mustGetById('overlayBody'),
   restartBtn: mustGetById('restartBtn') as HTMLButtonElement,
+  stageFrame: mustGetById('stageFrame'),
+  viewport16x9: mustGetById('viewport16x9'),
   gameHost: mustGetById('gameHost')
 };
 
@@ -159,6 +165,7 @@ const runtime: RuntimeState = {
 
 ui.restartBtn.addEventListener('click', () => restartRun());
 updateHud();
+const cleanupAspectBarrier = setupAspectBarrier(ui.stageFrame, ui.viewport16x9, 16 / 9);
 
 let game: Phaser.Game | null = null;
 
@@ -650,6 +657,37 @@ function mustGetById(id: string): HTMLElement {
   return node;
 }
 
+function setupAspectBarrier(frame: HTMLElement, viewport: HTMLElement, ratio: number): () => void {
+  const sync = (): void => {
+    const frameWidth = frame.clientWidth;
+    const frameHeight = frame.clientHeight;
+    if (!frameWidth || !frameHeight) {
+      return;
+    }
+
+    let width = frameWidth;
+    let height = Math.round(width / ratio);
+    if (height > frameHeight) {
+      height = frameHeight;
+      width = Math.round(height * ratio);
+    }
+
+    viewport.style.width = `${width}px`;
+    viewport.style.height = `${height}px`;
+    frame.dataset.bars = frameWidth / frameHeight > ratio ? 'pillar' : 'letter';
+  };
+
+  const observer = new ResizeObserver(sync);
+  observer.observe(frame);
+  window.addEventListener('resize', sync);
+  sync();
+
+  return () => {
+    observer.disconnect();
+    window.removeEventListener('resize', sync);
+  };
+}
+
 game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: ui.gameHost,
@@ -671,5 +709,6 @@ game = new Phaser.Game({
 });
 
 window.addEventListener('beforeunload', () => {
+  cleanupAspectBarrier();
   game?.destroy(true);
 });
