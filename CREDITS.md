@@ -3,6 +3,8 @@
 ## Visual Assets
 - Backgrounds and icons in `public/assets` were created in-house for this project.
 - Tool icons in `public/assets/icons/tools` were designed as custom vector assets for the game UI.
+- Narrative art files in `public/assets/bg_*.jpg`, `public/assets/cg_*.jpg`, and `public/assets/npc_*.png` were generated for this project through the Antigravity/Gemini pipeline and integrated into the Vite build.
+- Additional route expansion assets in `public/assets/generated/*.svg` were authored in-house for the expanded story branches (Hacker, Engineer, Diplomat, Bio, and finale).
 - Files in `public/game-assets` are sourced from the official Phaser Examples asset set:
   - Repository: `https://github.com/phaserjs/examples`
   - License: MIT (Phaser Examples project)

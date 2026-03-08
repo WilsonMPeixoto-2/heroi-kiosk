@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1029"/>
+      <stop offset="1" stop-color="#04050d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#night)"/>
+  <polygon points="760,90 880,90 1050,780 590,780" fill="#152048" stroke="#63f0ff" stroke-opacity="0.4" stroke-width="6"/>
+  <rect x="690" y="210" width="260" height="70" fill="#17345e" stroke="#76e7ff" stroke-opacity="0.6"/>
+  <rect x="670" y="340" width="300" height="70" fill="#17345e" stroke="#76e7ff" stroke-opacity="0.6"/>
+  <rect x="650" y="470" width="340" height="70" fill="#17345e" stroke="#76e7ff" stroke-opacity="0.6"/>
+  <rect x="630" y="600" width="380" height="70" fill="#17345e" stroke="#76e7ff" stroke-opacity="0.6"/>
+  <g stroke="#ff4fca" stroke-opacity="0.5" stroke-width="3">
+    <line x1="200" y1="760" x2="1400" y2="760"/>
+    <line x1="260" y1="710" x2="1340" y2="710"/>
+  </g>
+  <text x="120" y="120" fill="#f2e5ff" font-family="Orbitron, sans-serif" font-size="44" font-weight="700">TORRE HACKER CENTRAL</text>
+</svg>

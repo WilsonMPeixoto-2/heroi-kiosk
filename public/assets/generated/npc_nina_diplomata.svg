@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1600">
+  <rect width="900" height="1600" fill="#ffffff"/>
+  <ellipse cx="450" cy="1240" rx="230" ry="260" fill="#2a3a62"/>
+  <rect x="250" y="560" width="400" height="520" rx="140" fill="#3a4e84"/>
+  <circle cx="450" cy="420" r="190" fill="#d6ad86" stroke="#2f1d11" stroke-width="14"/>
+  <circle cx="390" cy="410" r="20" fill="#1e1710"/>
+  <circle cx="510" cy="410" r="20" fill="#1e1710"/>
+  <path d="M350 520 Q450 480 550 520" stroke="#2a1d13" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M290 300 Q450 160 610 300" stroke="#1f2d52" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <text x="450" y="1500" text-anchor="middle" fill="#2d3f6e" font-family="Orbitron, sans-serif" font-size="56" font-weight="700">NINA</text>
+</svg>

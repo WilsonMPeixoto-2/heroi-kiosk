@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132f55"/>
+      <stop offset="1" stop-color="#051223"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d5a80" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#0b2942" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <ellipse cx="800" cy="460" rx="620" ry="220" fill="#0b1a2c" stroke="#6bcfff" stroke-opacity="0.35" stroke-width="8"/>
+  <ellipse cx="800" cy="460" rx="480" ry="165" fill="none" stroke="#8de9ff" stroke-opacity="0.3" stroke-width="6"/>
+  <ellipse cx="800" cy="460" rx="340" ry="115" fill="none" stroke="#8de9ff" stroke-opacity="0.2" stroke-width="5"/>
+  <rect y="500" width="1600" height="400" fill="url(#water)"/>
+  <g stroke="#7de8ff" stroke-opacity="0.35" stroke-width="5" fill="none">
+    <path d="M120 560 C300 540 450 580 610 560 C760 540 940 590 1110 560 C1260 535 1400 570 1550 550"/>
+    <path d="M40 640 C260 620 390 670 590 640 C760 615 960 680 1180 640 C1340 610 1500 670 1600 640"/>
+  </g>
+  <text x="120" y="130" fill="#b7e6ff" font-family="Orbitron, sans-serif" font-size="46" font-weight="700">MARACANA SUBMERSO</text>
+</svg>

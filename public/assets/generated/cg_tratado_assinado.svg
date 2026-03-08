@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#132544"/>
+  <rect x="260" y="180" width="1080" height="560" rx="26" fill="#1d3b6b" stroke="#98d4ff" stroke-opacity="0.5" stroke-width="6"/>
+  <rect x="360" y="280" width="880" height="360" rx="20" fill="#23497f" stroke="#b0e6ff" stroke-opacity="0.4"/>
+  <path d="M430 540 Q800 300 1170 540" fill="none" stroke="#fff3c8" stroke-width="8"/>
+  <circle cx="620" cy="450" r="42" fill="#ffd37c"/>
+  <circle cx="980" cy="450" r="42" fill="#c7f7ff"/>
+  <text x="800" y="120" text-anchor="middle" fill="#eaf6ff" font-family="Orbitron, sans-serif" font-size="46" font-weight="700">TRATADO ASSINADO</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bio" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#102f2a"/>
+      <stop offset="1" stop-color="#06130f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bio)"/>
+  <ellipse cx="800" cy="520" rx="700" ry="280" fill="#0c261f" stroke="#75ffcb" stroke-opacity="0.45" stroke-width="8"/>
+  <circle cx="450" cy="450" r="170" fill="#1a5f4d" stroke="#8dffca" stroke-width="6" stroke-opacity="0.5"/>
+  <circle cx="800" cy="390" r="210" fill="#257a62" stroke="#a5ffd4" stroke-width="7" stroke-opacity="0.45"/>
+  <circle cx="1150" cy="470" r="150" fill="#1a5f4d" stroke="#8dffca" stroke-width="6" stroke-opacity="0.5"/>
+  <path d="M360 760 C520 640 690 620 820 740 C940 850 1130 830 1280 700" stroke="#9dffd9" stroke-opacity="0.6" stroke-width="10" fill="none"/>
+  <text x="120" y="120" fill="#d7ffe8" font-family="Orbitron, sans-serif" font-size="44" font-weight="700">DOMO BIOLOGICO MUTANTE</text>
+</svg>

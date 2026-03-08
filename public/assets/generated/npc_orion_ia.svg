@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1600">
+  <rect width="900" height="1600" fill="#ffffff"/>
+  <ellipse cx="450" cy="1240" rx="230" ry="260" fill="#2b2245"/>
+  <rect x="250" y="560" width="400" height="520" rx="140" fill="#38275f"/>
+  <circle cx="450" cy="420" r="190" fill="#8f7eff" stroke="#1c1438" stroke-width="14"/>
+  <circle cx="390" cy="410" r="22" fill="#ffffff"/>
+  <circle cx="510" cy="410" r="22" fill="#ffffff"/>
+  <circle cx="390" cy="410" r="10" fill="#281d4c"/>
+  <circle cx="510" cy="410" r="10" fill="#281d4c"/>
+  <path d="M355 520 Q450 470 545 520" stroke="#1f153f" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M260 260 Q450 120 640 260" stroke="#2a1f4f" stroke-width="30" fill="none" stroke-linecap="round"/>
+  <text x="450" y="1500" text-anchor="middle" fill="#2b2245" font-family="Orbitron, sans-serif" font-size="56" font-weight="700">ORION IA</text>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="g0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1730"/>
+      <stop offset="1" stop-color="#040910"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1be0ff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#7effb8" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g0)"/>
+  <rect x="120" y="120" width="1360" height="680" rx="28" fill="#07182a" stroke="#2dc7f7" stroke-opacity="0.4" stroke-width="6"/>
+  <rect x="180" y="180" width="460" height="260" rx="20" fill="#0a2742" stroke="#45e0ff" stroke-opacity="0.5"/>
+  <rect x="700" y="180" width="700" height="180" rx="18" fill="#102a42" stroke="#6ad8ff" stroke-opacity="0.45"/>
+  <rect x="700" y="390" width="700" height="350" rx="18" fill="#0a1a2f" stroke="#7effb8" stroke-opacity="0.25"/>
+  <rect x="180" y="470" width="460" height="270" rx="18" fill="#102338" stroke="#7effb8" stroke-opacity="0.25"/>
+  <g stroke="#34d6ff" stroke-opacity="0.25">
+    <line x1="220" y1="230" x2="600" y2="230"/><line x1="220" y1="270" x2="600" y2="270"/><line x1="220" y1="310" x2="600" y2="310"/>
+    <line x1="740" y1="240" x2="1360" y2="240"/><line x1="740" y1="280" x2="1360" y2="280"/>
+  </g>
+  <circle cx="300" cy="600" r="70" fill="#0f3a5a" stroke="#59ebff" stroke-opacity="0.5" stroke-width="4"/>
+  <circle cx="500" cy="600" r="48" fill="#11334f" stroke="#59ebff" stroke-opacity="0.5" stroke-width="4"/>
+  <rect x="760" y="440" width="580" height="250" rx="14" fill="url(#g1)"/>
+  <text x="220" y="160" fill="#9fe6ff" font-family="Orbitron, sans-serif" font-size="44" font-weight="700">SAFEHOUSE HUB</text>
+</svg>

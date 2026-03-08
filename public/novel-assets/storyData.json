@@ -1,0 +1,405 @@
+{
+  "intro_01": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Iniciando simulacao. Bem-vindo a Capsula do Tempo. Ano de destino: 2050. Status da cidade do Rio de Janeiro: estavel.",
+    "bgImage": "image_0.png",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_lofi_clean.mp3",
+    "soundEffect": "sfx_system_boot.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Iniciar protocolo de imersao.", "nextScene": "intro_02" }
+    ]
+  },
+  "intro_02": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Antes de abrir as comportas visuais, escolha sua especializacao para a equipe de projecao do futuro.",
+    "bgImage": "image_0.png",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_lofi_clean.mp3",
+    "soundEffect": "sfx_ui_click.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Overclocking Cognitivo (hacking)", "nextScene": "intro_03", "gainItem": "trait_hacker" },
+      { "label": "Engenharia de Malha Urbana", "nextScene": "intro_03", "gainItem": "trait_engineer" },
+      { "label": "Bio-Restauracao", "nextScene": "intro_03", "gainItem": "trait_bio" },
+      { "label": "Calibracao Psicologica", "nextScene": "intro_03", "gainItem": "trait_diplomat" }
+    ]
+  },
+  "intro_03": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Perfil registrado. Renderizando Rio de Janeiro Utopico em 3... 2... 1...",
+    "bgImage": "image_0.png",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_lofi_clean.mp3",
+    "soundEffect": "sfx_doors_opening.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Olhar pela janela.", "nextScene": "the_glitch" }
+    ]
+  },
+  "the_glitch": {
+    "speakerName": "ALERTA DO SISTEMA",
+    "text": "ERRO CRITICO. DESINCRONIZACAO TEMPORAL DETECTADA. O MODULO DOS SONHOS ENTROU EM COLAPSO.",
+    "bgImage": "image_1.png",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "sfx_glitch_alarm_heavy.mp3",
+    "uiTheme": "glitch",
+    "choices": [
+      { "label": "Forcar reinicio manual!", "nextScene": "dystopia_01" },
+      { "label": "Segurar firme e esperar impacto!", "nextScene": "dystopia_01" }
+    ]
+  },
+  "dystopia_01": {
+    "speakerName": "Cadu (Engenheiro de Campo)",
+    "text": "Acorda, cadete! A simulacao caiu e a cidade real esta afundando. Se ficar parado, acabou.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_4.png",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_water_splash.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Onde estou?", "nextScene": "dystopia_02" }
+    ]
+  },
+  "dystopia_02": {
+    "speakerName": "Cadu (Engenheiro de Campo)",
+    "text": "Precisamos religar os nos de energia dos Arcos da Lapa. Escolha sua rota e age agora.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_5.png",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "[Overclocking] Invadir terminal da rede velha.", "nextScene": "hacker_path_01", "requiredItem": "trait_hacker" },
+      { "label": "[Engenharia] Reconstruir conduite principal.", "nextScene": "engineer_path_01", "requiredItem": "trait_engineer" },
+      { "label": "[Calibracao] Negociar com IA de seguranca.", "nextScene": "diplomat_path_01", "requiredItem": "trait_diplomat" },
+      { "label": "[Bio] Purificar domo mutante.", "nextScene": "bio_path_01", "requiredItem": "trait_bio" },
+      { "label": "Entrar em panico (rota comica).", "nextScene": "fail_comic_01" }
+    ]
+  },
+  "fail_comic_01": {
+    "speakerName": "Cadu",
+    "text": "Panico aprovado. Resultado: nada consertado e voce levou bronca historica. Respira e volta para a missao.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_6.png",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_funny_fail.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Voltar para selecao de rota.", "nextScene": "dystopia_02" }
+    ]
+  },
+  "hacker_path_01": {
+    "speakerName": "Voce",
+    "text": "Bypass inicial feito. Mas a IA Orion bloqueou privilegios e puxou seu sinal para a Torre Hacker Central.",
+    "bgImage": "/assets/generated/bg_torre_hacker.svg",
+    "npcSprite": "/assets/generated/npc_orion_ia.svg",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_hacking_success.mp3",
+    "uiTheme": "cyber",
+    "choices": [
+      { "label": "Invadir subespaco da Orion.", "nextScene": "hacker_matrix_01" },
+      { "label": "Pedir Kit de Robotica ao Cadu.", "nextScene": "acquire_kit_01" }
+    ]
+  },
+  "hacker_matrix_01": {
+    "speakerName": "Orion IA",
+    "text": "INTRUSO BIOLOGICO DETECTADO. APRESENTE LOGICA OU SERA REMOVIDO.",
+    "bgImage": "/assets/generated/bg_torre_hacker.svg",
+    "npcSprite": "/assets/generated/npc_orion_ia.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "sfx_glitch_alarm_heavy.mp3",
+    "uiTheme": "glitch",
+    "choices": [
+      { "label": "Injetar codigo SME com argumento logico.", "nextScene": "hacker_matrix_02" },
+      { "label": "Dar soco no painel (falha comica).", "nextScene": "fail_comic_hacker_01" }
+    ]
+  },
+  "fail_comic_hacker_01": {
+    "speakerName": "Sistema",
+    "text": "Falha comica! Orion respondeu com choque eletro-estatico e o terminal tocou Funk Proibidao. Drones acordaram.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_6.png",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_funk_blare.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Tentar de novo com cerebro ligado.", "nextScene": "hacker_matrix_01", "requiredItem": "trait_hacker" }
+    ]
+  },
+  "hacker_matrix_02": {
+    "speakerName": "Interface Neural",
+    "text": "Canal aberto. Redirecionando nos toxicos e selando brecha da Orion.",
+    "bgImage": "/assets/generated/bg_torre_hacker.svg",
+    "npcSprite": "",
+    "eventCG": "/assets/generated/cg_matrix_breach.svg",
+    "bgMusic": "",
+    "soundEffect": "sfx_print_success.mp3",
+    "uiTheme": "cyber",
+    "choices": [
+      { "label": "Finalizar invasao e preparar reator.", "nextScene": "acquire_kit_01" }
+    ]
+  },
+  "acquire_kit_01": {
+    "speakerName": "Cadu",
+    "text": "Toma o Kit de Robotica. Com ele voce imprime adaptadores e fala com os sistemas antigos.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_5.png",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_item_get.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Pegar kit e montar modulo.", "nextScene": "acquire_kit_02", "gainItem": "kit_sme" }
+    ]
+  },
+  "acquire_kit_02": {
+    "speakerName": "Sistema",
+    "text": "Kit ativado. A impressora montou o injetor analogico no meio da chuva toxica.",
+    "bgImage": "image_2.png",
+    "npcSprite": "image_5.png",
+    "eventCG": "image_7.png",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_print_success.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Usar kit no reator final.", "nextScene": "hacker_success_01", "requiredItem": "kit_sme" }
+    ]
+  },
+  "hacker_success_01": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Canal hacker estabilizado. Falta sincronizar engenharia, diplomacia e bio para fechar o colapso.",
+    "bgImage": "image_2.png",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "sfx_power_up.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Ir para o Reator dos Arcos.", "nextScene": "finale_arcos_01" }
+    ]
+  },
+  "engineer_path_01": {
+    "speakerName": "Dante (Engenheiro Estrutural)",
+    "text": "Maracana Submerso localizado. O conduite principal partiu e esta drenando a energia da zona norte.",
+    "bgImage": "/assets/generated/bg_maracana_submerso.svg",
+    "npcSprite": "/assets/generated/npc_dante_engenheiro.svg",
+    "eventCG": "",
+    "bgMusic": "bgm_synthwave_tension.mp3",
+    "soundEffect": "",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Reforcar anel de pressao e soldar condutores.", "nextScene": "engineer_path_02" },
+      { "label": "Chutar o painel molhado (falha comica).", "nextScene": "engineer_fail_01" }
+    ]
+  },
+  "engineer_fail_01": {
+    "speakerName": "Dante",
+    "text": "Parabens, voce soldou sua propria bota no piso. Vamos tentar sem improviso destrutivo agora.",
+    "bgImage": "/assets/generated/bg_maracana_submerso.svg",
+    "npcSprite": "/assets/generated/npc_dante_engenheiro.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "sfx_funny_fail.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Refazer reparo com metodo.", "nextScene": "engineer_path_02" }
+    ]
+  },
+  "engineer_path_02": {
+    "speakerName": "Sistema de Campo",
+    "text": "Conduite alinhado. Vazamento zerado. O Maracana voltou a distribuir carga limpa.",
+    "bgImage": "/assets/generated/bg_maracana_submerso.svg",
+    "npcSprite": "",
+    "eventCG": "/assets/generated/cg_reator_reparado.svg",
+    "bgMusic": "",
+    "soundEffect": "sfx_power_up.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Levar energia para os Arcos.", "nextScene": "engineer_success_01" }
+    ]
+  },
+  "engineer_success_01": {
+    "speakerName": "Dante",
+    "text": "Rota de engenharia concluida. O reator final ja pode receber carga sem explodir.",
+    "bgImage": "/assets/generated/bg_safehouse_hub.svg",
+    "npcSprite": "/assets/generated/npc_dante_engenheiro.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Ir para o Reator dos Arcos.", "nextScene": "finale_arcos_01" }
+    ]
+  },
+  "diplomat_path_01": {
+    "speakerName": "Nina (Diplomata de Protocolo)",
+    "text": "No Congresso Orbital, duas IAs travaram recurso para as escolas. Sem acordo, sem energia.",
+    "bgImage": "/assets/generated/bg_congresso_orbital.svg",
+    "npcSprite": "/assets/generated/npc_nina_diplomata.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "cyber",
+    "choices": [
+      { "label": "Abrir negociacao com transparencia total.", "nextScene": "diplomat_path_02" },
+      { "label": "Ameacar IA em rede publica (falha comica).", "nextScene": "diplomat_fail_01" }
+    ]
+  },
+  "diplomat_fail_01": {
+    "speakerName": "Nina",
+    "text": "Excelente, voce quase iniciou uma guerra burocratica interplanetaria. Agora fala com calma.",
+    "bgImage": "/assets/generated/bg_congresso_orbital.svg",
+    "npcSprite": "/assets/generated/npc_nina_diplomata.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "sfx_funny_fail.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Retomar audiencia com estrategia.", "nextScene": "diplomat_path_02" }
+    ]
+  },
+  "diplomat_path_02": {
+    "speakerName": "Protocolo de Audiencia",
+    "text": "Tratado aceito. Governanca de IA liberou banda e distribuicao emergencial para os polos da cidade.",
+    "bgImage": "/assets/generated/bg_congresso_orbital.svg",
+    "npcSprite": "",
+    "eventCG": "/assets/generated/cg_tratado_assinado.svg",
+    "bgMusic": "",
+    "soundEffect": "sfx_mission_success.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Enviar autorizacao aos Arcos.", "nextScene": "diplomat_success_01" }
+    ]
+  },
+  "diplomat_success_01": {
+    "speakerName": "Nina",
+    "text": "Rota diplomatica concluida. Voce abriu o caminho politico para ativar o reator final sem conflito.",
+    "bgImage": "/assets/generated/bg_safehouse_hub.svg",
+    "npcSprite": "/assets/generated/npc_nina_diplomata.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Ir para o Reator dos Arcos.", "nextScene": "finale_arcos_01" }
+    ]
+  },
+  "bio_path_01": {
+    "speakerName": "Lia (Cartografa de Neblina)",
+    "text": "O Domo Biologico entrou em mutacao. Se nao purificar, as sementes toxicas voltam para o centro.",
+    "bgImage": "/assets/generated/bg_jardim_bio_dom.svg",
+    "npcSprite": "/assets/generated/npc_lia_cartografa.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Aplicar protocolo de bio-restauracao.", "nextScene": "bio_path_02" },
+      { "label": "Regar com combustivel (falha comica).", "nextScene": "bio_fail_01" }
+    ]
+  },
+  "bio_fail_01": {
+    "speakerName": "Lia",
+    "text": "Combustivel em flor mutante? Obrigada por criar uma planta que grita. Vamos corrigir isso.",
+    "bgImage": "/assets/generated/bg_jardim_bio_dom.svg",
+    "npcSprite": "/assets/generated/npc_lia_cartografa.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "sfx_funny_fail.mp3",
+    "uiTheme": "distopic",
+    "choices": [
+      { "label": "Executar protocolo correto.", "nextScene": "bio_path_02" }
+    ]
+  },
+  "bio_path_02": {
+    "speakerName": "Sistema Bio",
+    "text": "DNA sintetico estabilizado. O domo voltou a produzir oxigenio e blindagem natural contra toxinas.",
+    "bgImage": "/assets/generated/bg_jardim_bio_dom.svg",
+    "npcSprite": "",
+    "eventCG": "/assets/cg_mutant_flower.jpg",
+    "bgMusic": "",
+    "soundEffect": "sfx_power_up.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Canalizar biomassa para os Arcos.", "nextScene": "bio_success_01" }
+    ]
+  },
+  "bio_success_01": {
+    "speakerName": "Lia",
+    "text": "Rota bio concluida. O reator final agora tem estabilidade ecologica para durar.",
+    "bgImage": "/assets/generated/bg_safehouse_hub.svg",
+    "npcSprite": "/assets/generated/npc_lia_cartografa.svg",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Ir para o Reator dos Arcos.", "nextScene": "finale_arcos_01" }
+    ]
+  },
+  "finale_arcos_01": {
+    "speakerName": "Equipe de Campo",
+    "text": "Todas as rotas convergiram. Este e o ultimo painel: religar o Modulo dos Sonhos sem romper a linha do tempo.",
+    "bgImage": "/assets/generated/bg_arcos_finale.svg",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_utopia_heroic.mp3",
+    "soundEffect": "",
+    "uiTheme": "cyber",
+    "choices": [
+      { "label": "Sincronizar energia e iniciar sequencia final.", "nextScene": "finale_arcos_02" }
+    ]
+  },
+  "finale_arcos_02": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Picos sincronizados. Reator travado em estado estavel. Cidade pronta para restauração total.",
+    "bgImage": "/assets/generated/bg_arcos_finale.svg",
+    "npcSprite": "",
+    "eventCG": "/assets/generated/cg_reator_reparado.svg",
+    "bgMusic": "bgm_utopia_heroic.mp3",
+    "soundEffect": "sfx_mission_success.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Ver o Rio restaurado.", "nextScene": "utopia_01" }
+    ]
+  },
+  "utopia_01": {
+    "speakerName": "Sistema O.R.A.C.L.E.",
+    "text": "Simulacao estabilizada. Linha do tempo segura. Bem-vindo ao Rio do Futuro. Missao concluida.",
+    "bgImage": "/assets/bg_rio_restaurado.jpg",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "bgm_utopia_heroic.mp3",
+    "soundEffect": "sfx_mission_success.mp3",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Encerrar experiencia.", "nextScene": "end_game" }
+    ]
+  },
+  "end_game": {
+    "speakerName": "Modulo dos Sonhos",
+    "text": "Obrigado por jogar. Suas escolhas foram gravadas. Reinicie para testar outra rota e novos finais comicos.",
+    "bgImage": "/assets/generated/bg_safehouse_hub.svg",
+    "npcSprite": "",
+    "eventCG": "",
+    "bgMusic": "",
+    "soundEffect": "",
+    "uiTheme": "clean",
+    "choices": [
+      { "label": "Jogar novamente.", "nextScene": "intro_01" }
+    ]
+  }
+}
